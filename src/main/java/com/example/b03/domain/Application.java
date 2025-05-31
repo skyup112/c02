@@ -1,17 +1,16 @@
 package com.example.b03.domain;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
-
+@EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "applications", uniqueConstraints = @UniqueConstraint(columnNames = {"post_id", "member_no"}))
 @Data
+@Builder
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Application extends BaseEntity {

@@ -2,12 +2,14 @@ package com.example.b03.domain;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "membership_types")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class MembershipType {

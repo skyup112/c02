@@ -1,4 +1,4 @@
-// 4. 직무 카테고리
+// 4. JobCategory
 package com.example.b03.repository;
 
 import com.example.b03.domain.JobCategory;

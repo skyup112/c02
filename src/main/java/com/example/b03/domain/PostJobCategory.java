@@ -6,10 +6,12 @@ import lombok.*;
 @Entity
 @Table(name = "post_job_categories")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @IdClass(PostJobCategoryId.class)
 public class PostJobCategory {
+
     @Id
     private Integer postId;
 
@@ -17,10 +19,12 @@ public class PostJobCategory {
     private Integer jobCategoryId;
 
     @ManyToOne
-    @JoinColumn(name = "post_id", insertable = false, updatable = false)
+    @MapsId("postId")
+    @JoinColumn(name = "post_id")
     private Post post;
 
     @ManyToOne
-    @JoinColumn(name = "job_category_id", insertable = false, updatable = false)
+    @MapsId("jobCategoryId")
+    @JoinColumn(name = "job_category_id")
     private JobCategory jobCategory;
 }

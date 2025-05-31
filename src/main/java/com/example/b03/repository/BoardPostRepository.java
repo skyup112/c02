@@ -1,4 +1,4 @@
-// 9. 자유게시판 게시글
+// 9. BoardPost
 package com.example.b03.repository;
 
 import com.example.b03.domain.BoardPost;

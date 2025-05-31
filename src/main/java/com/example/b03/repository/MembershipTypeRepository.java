@@ -1,4 +1,4 @@
-// 1. 회원 타입
+// 1. MembershipType
 package com.example.b03.repository;
 
 import com.example.b03.domain.MembershipType;

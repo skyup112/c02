@@ -6,22 +6,27 @@ import lombok.*;
 @Entity
 @Table(name = "company_job_categories")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @IdClass(CompanyJobCategoryId.class)
 public class CompanyJobCategory {
+
     @Id
+    @Column(name = "member_no")
     private Integer memberNo;
 
     @Id
+    @Column(name = "job_category_id")
     private Integer jobCategoryId;
 
     @ManyToOne
-    @JoinColumn(name = "member_no", insertable = false, updatable = false)
+    @MapsId("memberNo")
+    @JoinColumn(name = "member_no")
     private CompanyInfo company;
 
     @ManyToOne
-    @JoinColumn(name = "job_category_id", insertable = false, updatable = false)
+    @MapsId("jobCategoryId")
+    @JoinColumn(name = "job_category_id")
     private JobCategory jobCategory;
 }
-
