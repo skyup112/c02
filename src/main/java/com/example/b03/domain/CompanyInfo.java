@@ -37,7 +37,7 @@ public class CompanyInfo extends BaseEntity {
     private String techStack;
 
     @Column(length = 255)
-    private String location;
+    private String address;
 
     @Column(name = "homepage_url", length = 255)
     private String homepageUrl;

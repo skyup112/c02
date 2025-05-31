@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>기업 - 지원자 상세</title></head>
+<body>
+  <h2>기업회원 전용 지원자 정보</h2>
+  <table>
+    <tr><th>이름</th><th>전화번호</th><th>이력서</th></tr>
+    <tr th:each="app : ${applications}">
+      <td th:text="${app.name}">이름</td>
+      <td th:text="${app.phone}">전화번호</td>
+      <td><a th:href="@{${app.resumeFilePath}}">이력서</a></td>
+    </tr>
+  </table>
+</body>
+</html>

@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>지원 상세</title></head>
+<body>
+  <h2>지원 상세 정보</h2>
+  <p>공고 ID: <span th:text="${application.postId}"></span></p>
+  <p>지원자 ID: <span th:text="${application.memberId}"></span></p>
+  <p>파일: <a th:href="@{${application.resumeFilePath}}">다운로드</a></p>
+</body>
+</html>

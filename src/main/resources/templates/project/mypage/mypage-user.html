@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>개인회원 마이페이지</title>
+    <style>
+        .container { display: flex; }
+        .sidebar {
+            width: 200px;
+            background-color: #f2f2f2;
+            padding: 20px;
+            height: 100vh;
+        }
+        .sidebar a {
+            display: block;
+            margin-bottom: 10px;
+            text-decoration: none;
+        }
+        .content {
+            flex: 1;
+            padding: 20px;
+        }
+        .nav-top {
+            background-color: #e9e9e9;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="nav-top">
+    <a th:href="@{/member/main}">🏠 메인으로</a>
+</div>
+
+<div class="container">
+    <!-- 좌측 메뉴 -->
+    <div class="sidebar">
+        <strong>📁 마이페이지 메뉴</strong>
+        <a href="#" onclick="showSection('info')">회원 정보</a>
+        <a href="#" onclick="showSection('history')">지원 내역</a>
+        <a href="#" onclick="showSection('settings')">정보 수정</a>
+    </div>
+
+    <!-- 우측 콘텐츠 -->
+    <div class="content">
+        <!-- 회원 정보 -->
+        <div id="section-info">
+            <h2>회원 정보</h2>
+            <p>이름: <span th:text="${member.name}"></span></p>
+            <p>아이디: <span th:text="${member.loginId}"></span></p>
+            <p>전화번호: <span th:text="${member.phone}"></span></p>
+            <p>주소: <span th:text="${member.address}"></span></p>
+        </div>
+
+        <!-- 지원 내역 -->
+        <div id="section-history" style="display:none;">
+            <h2>지원 내역</h2>
+            <p>※ 지원서 목록을 여기에 출력할 수 있습니다.</p>
+        </div>
+
+        <!-- 정보 수정 -->
+        <div id="section-settings" style="display:none;">
+            <h2>회원 정보 수정</h2>
+            <form th:action="@{/member/update}" method="post">
+                <input type="hidden" name="memberNo" th:value="${member.memberNo}" />
+                <input type="hidden" name="loginId" th:value="${member.loginId}" />
+
+                <label>이름: <input type="text" name="name" th:value="${member.name}" required /></label><br/>
+                <label>비밀번호: <input type="password" name="password" th:value="${member.password}" required /></label><br/>
+                <label>전화번호: <input type="text" name="phone" th:value="${member.phone}" /></label><br/>
+                <label>주소: <input type="text" name="address" th:value="${member.address}" /></label><br/>
+                <button type="submit">수정 완료</button>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function showSection(section) {
+        document.getElementById("section-info").style.display = 'none';
+        document.getElementById("section-history").style.display = 'none';
+        document.getElementById("section-settings").style.display = 'none';
+
+        document.getElementById("section-" + section).style.display = 'block';
+    }
+</script>
+
+</body>
+</html>

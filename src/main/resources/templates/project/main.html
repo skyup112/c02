@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>웹사이트 메인 페이지</title>
+    <style>
+        nav a {
+            margin: 0 15px;
+            text-decoration: none;
+            color: black;
+        }
+        .header {
+            border-bottom: 1px solid #aaa;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div style="float:right;">
+        <span th:if="${session.loginMember == null}">
+            <a th:href="@{/member/login}">로그인</a> |
+            <a th:href="@{/member/join}">회원가입</a>
+        </span>
+        <span th:if="${session.loginMember != null}">
+            <strong th:text="${session.loginMember.name} + '님 환영합니다!'"></strong> |
+            <a th:href="@{/member/logout}">로그아웃</a>
+        </span>
+    </div>
+
+    <h2 style="color:#5f83d6;">CodeFarm</h2>
+
+    <nav>
+        <a th:href="@{/jobs}">채용공고</a>
+        <a th:href="@{/company}">기업 소개</a>
+        <a th:href="@{/board}">자유게시판</a>
+        <a th:href="@{/inquiry}">1:1문의</a>
+        <a href="#" onclick="goToMypage()">마이페이지</a>
+    </nav>
+</div>
+
+<hr/>
+
+<!-- 안내 메시지 -->
+<div th:if="${session.loginMember == null}" style="background-color:#ffefef; padding:15px; border:1px solid red;">
+    ⚠ 로그인 후 이용 가능한 메뉴가 있습니다. 지금 로그인하시겠습니까?
+</div>
+
+<div>
+    <h3>📢 최신 공지사항</h3>
+    <p>CodeFarm에 오신 것을 환영합니다!</p>
+</div>
+
+<script th:inline="javascript">
+    function goToMypage() {
+        const isLoggedIn = /*[[${session.loginMember != null}]]*/ false;
+        if (isLoggedIn) {
+            window.location.href = '/member/mypage';
+        } else {
+            alert('로그인이 필요합니다. 로그인 페이지로 이동합니다.');
+            window.location.href = '/member/login';
+        }
+    }
+</script>
+
+</body>
+</html>

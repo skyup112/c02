@@ -34,7 +34,7 @@ public class Post extends BaseEntity {
     private String salary;
 
     @Column(length = 100)
-    private String location;
+    private String address;
 
     @Column(name = "posted_date")
     private LocalDateTime postedDate;

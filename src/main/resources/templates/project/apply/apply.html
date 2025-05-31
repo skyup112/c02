@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>지원하기</title></head>
+<body>
+  <h2>공고 지원</h2>
+  <form th:action="@{/applications/apply}" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="postId" th:value="${postId}" />
+    <input type="hidden" name="memberNo" th:value="${memberNo}" />
+    <label>이력서 파일: <input type="file" name="file"/></label><br/>
+    <button type="submit">지원 제출</button>
+  </form>
+</body>
+</html>
