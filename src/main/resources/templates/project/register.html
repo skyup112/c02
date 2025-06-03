@@ -15,8 +15,17 @@
     <label>생년월일: <input type="date" name="birthDate" required/></label><br/>
     <label>아이디: <input type="text" name="loginId" required/></label>
     <button type="button" onclick="checkDuplicate()">중복 확인</button><br/>
-    <label>비밀번호: <input type="password" name="password" required/></label><br/>
-    <label>비밀번호 확인: <input type="password" name="passwordConfirm" required/></label><br/>
+    <label>비밀번호:
+      <input type="password" name="password" required
+             pattern="^(?=.*[A-Za-z])(?=.*\\d)(?=.*[!@#$%^&*()_+=-]).{8,}$"
+             title="8자 이상, 영문+숫자+특수문자를 포함해야 합니다." />
+    </label><br/>
+
+    <label>비밀번호 확인:
+      <input type="password" name="passwordConfirm" required
+             pattern="^(?=.*[A-Za-z])(?=.*\\d)(?=.*[!@#$%^&*()_+=-]).{8,}$"
+             title="비밀번호 형식을 다시 확인해주세요." />
+    </label><br/>
     <label>전화번호: <input type="text" name="phone"/></label><br/>
     <label>주소: <input type="text" name="address"/></label><br/>
   </div>
@@ -26,8 +35,17 @@
     <label>설립일자: <input type="date" name="birthDate" required/></label><br/>
     <label>아이디: <input type="text" name="loginId" required/></label>
     <button type="button" onclick="checkDuplicate()">중복 확인</button><br/>
-    <label>비밀번호: <input type="password" name="password" required/></label><br/>
-    <label>비밀번호 확인: <input type="password" name="passwordConfirm" required/></label><br/>
+    <label>비밀번호:
+      <input type="password" name="password" required
+             pattern="^(?=.*[A-Za-z])(?=.*\\d)(?=.*[!@#$%^&*()_+=-]).{8,}$"
+             title="8자 이상, 영문+숫자+특수문자를 포함해야 합니다." />
+    </label><br/>
+
+    <label>비밀번호 확인:
+      <input type="password" name="passwordConfirm" required
+             pattern="^(?=.*[A-Za-z])(?=.*\\d)(?=.*[!@#$%^&*()_+=-]).{8,}$"
+             title="비밀번호 형식을 다시 확인해주세요." />
+    </label><br/>
     <label>기업 전화번호: <input type="text" name="phone"/></label><br/>
     <label>기업 주소: <input type="text" name="address"/></label><br/>
   </div>
@@ -43,6 +61,15 @@
             .then(res => res.json())
             .then(data => alert(data ? "이미 존재하는 ID입니다." : "사용 가능한 ID입니다."));
   }
+
+  document.querySelector("form").addEventListener("submit", function (e) {
+    const pw = document.querySelector("input[name='password']").value;
+    const pwConfirm = document.querySelector("input[name='passwordConfirm']").value;
+    if (pw !== pwConfirm) {
+      alert("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+      e.preventDefault(); // 전송 막음
+    }
+  });
 </script>
 </body>
 </html>

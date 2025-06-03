@@ -11,6 +11,8 @@ import java.time.LocalDateTime;
 @Table(name = "posts")
 @Data
 @Builder
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Post extends BaseEntity {

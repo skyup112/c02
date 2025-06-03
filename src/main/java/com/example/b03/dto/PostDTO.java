@@ -18,4 +18,6 @@ public class PostDTO {
     private LocalDateTime postedDate;
     private LocalDateTime updatedDate;
     private LocalDate deadline;
+
+    private Integer companyMemberNo;
 }

@@ -44,10 +44,10 @@
     <!-- 우측 콘텐츠 -->
     <div class="content">
         <!-- 회원 정보 -->
-        <div id="section-info">
+        <div id="section-info" style="display:block;">
             <h2>회원 정보</h2>
             <p>이름: <span th:text="${member.name}"></span></p>
-            <p>아이디: <span th:text="${member.loginId}"></span></p>
+            <p>생년월일: <span th:text="${member.birthDate}"></span></p>
             <p>전화번호: <span th:text="${member.phone}"></span></p>
             <p>주소: <span th:text="${member.address}"></span></p>
         </div>
@@ -55,23 +55,39 @@
         <!-- 지원 내역 -->
         <div id="section-history" style="display:none;">
             <h2>지원 내역</h2>
-            <p>※ 지원서 목록을 여기에 출력할 수 있습니다.</p>
+
+            <div th:if="${#lists.isEmpty(applications)}">
+                <p>지원한 공고가 없습니다.</p>
+            </div>
+
+            <div th:unless="${#lists.isEmpty(applications)}">
+                <table border="1" cellpadding="5" style="width:100%; text-align:center;">
+                    <thead>
+                    <tr>
+                        <th>공고 제목</th>
+                        <th>지원일</th>
+                        <th>파일</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="app : ${applications}">
+                        <td th:text="${app.postTitle}"></td>
+                        <td th:text="${#temporals.format(app.submittedAt, 'yyyy-MM-dd')}"></td>
+                        <td>
+                            <a th:href="@{${'/files/' + app.filePath}}" target="_blank"
+                               th:text="${app.filePath != null ? '다운로드' : '없음'}"></a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-
-        <!-- 정보 수정 -->
+        <!-- 정보 수정 섹션 -->
         <div id="section-settings" style="display:none;">
-            <h2>회원 정보 수정</h2>
-            <form th:action="@{/member/update}" method="post">
-                <input type="hidden" name="memberNo" th:value="${member.memberNo}" />
-                <input type="hidden" name="loginId" th:value="${member.loginId}" />
-
-                <label>이름: <input type="text" name="name" th:value="${member.name}" required /></label><br/>
-                <label>비밀번호: <input type="password" name="password" th:value="${member.password}" required /></label><br/>
-                <label>전화번호: <input type="text" name="phone" th:value="${member.phone}" /></label><br/>
-                <label>주소: <input type="text" name="address" th:value="${member.address}" /></label><br/>
-                <button type="submit">수정 완료</button>
-            </form>
-
+            <h2>정보 수정</h2>
+            <p>회원 정보와 비밀번호를 수정할 수 있습니다.</p>
+            <button onclick="location.href='/member/edit'">회원 정보 수정</button>
+            <button onclick="location.href='/member/password-change'">비밀번호 변경</button>
         </div>
     </div>
 </div>

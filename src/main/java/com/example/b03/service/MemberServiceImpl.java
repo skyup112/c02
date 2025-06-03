@@ -157,4 +157,17 @@ public class MemberServiceImpl implements MemberService {
                 })
                 .orElseThrow(() -> new IllegalArgumentException("Member not found"));
     }
+    @Override
+    public boolean isValidPassword(String password) {
+        if (password == null || password.length() < 8) return false;
+
+        // 영문자 + 숫자 + 특수문자 포함
+        String pattern = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[!@#$%^&*()_+=-]).{8,}$";
+        if (!password.matches(pattern)) return false;
+
+        // 같은 문자 3번 이상 반복 금지 (aaa, !!! 등)
+        if (password.matches(".*(.)\\1\\1.*")) return false;
+
+        return true;
+    }
 }

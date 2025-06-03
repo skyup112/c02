@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface PostRepository extends JpaRepository<Post, Integer> {
     List<Post> findByCompany_Member_MemberNo(Integer memberNo); // 기업회원이 등록한 공고 목록
+    List<Post> findAllByOrderByPostedDateDesc();
 }

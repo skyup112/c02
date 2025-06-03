@@ -22,4 +22,5 @@ public interface MemberService {
     boolean checkDuplicateLoginId(String loginId);
     void changePassword(Integer memberNo, String newPassword);
     void deactivateMember(Integer memberNo);
+    boolean isValidPassword(String password);
 }

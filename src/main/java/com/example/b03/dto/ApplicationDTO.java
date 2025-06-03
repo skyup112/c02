@@ -15,4 +15,6 @@ public class ApplicationDTO {
     private LocalDateTime submittedAt;
     private LocalDateTime updatedAt;
 
+    private String postTitle;     // 공고 제목
+
 }

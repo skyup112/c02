@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>내 공고 목록</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .top-bar {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <a th:href="@{/member/mypage}">← 마이페이지로</a>
+    <h2>📄 내가 등록한 공고</h2>
+</div>
+
+<div th:if="${#lists.isEmpty(posts)}">
+    <p>등록된 공고가 없습니다.</p>
+</div>
+
+<div th:unless="${#lists.isEmpty(posts)}">
+    <table>
+        <thead>
+        <tr>
+            <th>공고 ID</th>
+            <th>제목</th>
+            <th>주소</th>
+            <th>마감일</th>
+            <th>수정</th>
+            <th>삭제</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="post : ${posts}">
+            <td th:text="${post.postId}">1</td>
+            <td>
+                <a th:href="@{'/post/view/' + ${post.postId}}" th:text="${post.title}">제목</a>
+            </td>
+            <td th:text="${post.address}">주소</td>
+            <td th:text="${#temporals.format(post.deadline, 'yyyy-MM-dd')}">마감일</td>
+            <td><a th:href="@{'/post/edit/' + ${post.postId}}">수정</a></td>
+            <td>
+                <form th:action="@{'/post/delete/' + ${post.postId}}" method="post"
+                      onsubmit="return confirm('정말 삭제하시겠습니까?');">
+                    <button type="submit">삭제</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

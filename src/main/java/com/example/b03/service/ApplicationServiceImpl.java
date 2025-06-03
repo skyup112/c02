@@ -113,18 +113,15 @@ public class ApplicationServiceImpl implements ApplicationService {
     private String saveFile(MultipartFile file) {
         String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
         File dest = new File(uploadDir + File.separator + fileName);
+
         try {
             file.transferTo(dest);
         } catch (IOException e) {
             throw new RuntimeException("파일 저장 실패", e);
         }
-        return dest.getAbsolutePath();
-    }
 
-    @Override
-    public List<ApplicationDTO> getApplicationsByMember(Integer memberNo) {
-        return applicationRepository.findByMember_MemberNo(memberNo)
-                .stream().map(this::toDTO).collect(Collectors.toList());
+        // 상대 경로 반환
+        return "/uploads/" + fileName;  // 웹에서 접근할 수 있는 경로로 수정
     }
 
     @Override
@@ -158,6 +155,15 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
+    public List<ApplicationDTO> getApplicationsByMember(Integer memberNo) {
+        return applicationRepository.findByMember_MemberNo(memberNo).stream()
+                .sorted(Comparator.comparing(Application::getSubmittedAt).reversed()) // 최신순 정렬
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+
+    @Override
     public List<Map<String, Object>> getApplicationsWithMemberInfoByPostAndCompany(Integer postId, Integer companyMemberNo) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("공고가 존재하지 않습니다."));
@@ -165,6 +171,8 @@ public class ApplicationServiceImpl implements ApplicationService {
         if (!post.getCompany().getMember().getMemberNo().equals(companyMemberNo)) {
             throw new IllegalArgumentException("해당 공고에 접근 권한이 없습니다.");
         }
+
+
 
         List<Application> applications = applicationRepository.findByPost_PostId(postId);
 
@@ -187,6 +195,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .applicationId(application.getApplicationId())
                 .memberNo(application.getMember().getMemberNo())
                 .postId(application.getPost().getPostId())
+                .postTitle(application.getPost().getTitle()) // ← 추가
                 .filePath(application.getFilePath())
                 .submittedAt(application.getSubmittedAt())
                 .updatedAt(application.getUpdatedAt())

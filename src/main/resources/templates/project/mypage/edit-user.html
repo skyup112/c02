@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>회원 정보 수정</title>
+</head>
+<body>
+<h2>회원 정보 수정</h2>
+
+<!-- ✅ 수정 폼 -->
+<form th:action="@{/member/edit}" method="post">
+    <input type="hidden" name="memberNo" th:value="${member.memberNo}" />
+    <input type="hidden" name="membershipTypeId" th:value="${member.membershipTypeId}" />
+    <input type="hidden" name="loginId" th:value="${member.loginId}" />
+
+    <label>이름: <input type="text" name="name" th:value="${member.name}" required /></label><br/>
+    <label>생년월일: <input type="date" name="birthDate" th:value="${member.birthDate}" required /></label><br/>
+    <label>전화번호: <input type="text" name="phone" th:value="${member.phone}" /></label><br/>
+    <label>주소: <input type="text" name="address" th:value="${member.address}" /></label><br/>
+
+    <!-- ✅ 비밀번호 확인 -->
+    <label>비밀번호 확인: <input type="password" name="confirmPassword" required /></label><br/><br/>
+
+    <button type="submit">저장</button>
+</form>
+
+<hr>
+<h3>보안 관리</h3>
+<button onclick="location.href='/member/password-change'">비밀번호 변경</button>
+
+<hr/>
+
+<!-- ✅ 회원 탈퇴 -->
+<h3>회원 탈퇴</h3>
+<form th:action="@{/member/delete}" method="post">
+    <label>비밀번호 확인: <input type="password" name="confirmPassword" required /></label><br/>
+    <button type="submit" onclick="return confirm('정말 탈퇴하시겠습니까? 탈퇴 후 복구할 수 없습니다.');">회원 탈퇴</button>
+</form>
+
+<br/>
+<!-- ✅ 마이페이지 돌아가기 -->
+<button onclick="location.href='/member/mypage'">취소</button>
+
+</body>
+</html>

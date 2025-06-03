@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>모든 채용 공고 목록</title>
+    <style>
+        nav a {
+            margin: 0 15px;
+            text-decoration: none;
+            color: black;
+        }
+        .header {
+            border-bottom: 1px solid #aaa;
+            padding: 10px;
+        }
+    </style>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .top-bar {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h2 style="color:#5f83d6;">
+        <a th:href="@{/member/main}" style="text-decoration: none; color: #5f83d6;">CodeFarm</a>
+    </h2>
+    <!-- 네비게이션 - 돌아가기 링크들 -->
+    <nav>
+        <a th:href="@{/post/all}">채용 공고</a>
+        <a th:href="@{/company}">기업 소개</a>
+        <a th:href="@{/board}">자유게시판</a>
+        <a th:href="@{/inquiry}">1:1문의</a>
+        <a href="#" onclick="goToMypage()">마이페이지</a>
+    </nav>
+</div>
+
+<div class="top-bar">
+    <h2>📄 모든 채용 공고 목록</h2>
+</div>
+
+<div th:if="${#lists.isEmpty(posts)}">
+    <p>등록된 공고가 없습니다.</p>
+</div>
+
+<div th:unless="${#lists.isEmpty(posts)}">
+    <table>
+        <thead>
+        <tr>
+            <th>공고 ID</th>
+            <th>제목</th>
+            <th>주소</th>
+            <th>마감일</th>
+            <th>상세보기</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="post : ${posts}">
+            <td th:text="${post.postId}">1</td>
+            <td>
+                <a th:href="@{'/post/view/' + ${post.postId}}" th:text="${post.title}">제목</a>
+            </td>
+            <td th:text="${post.address}">주소</td>
+            <td th:text="${#temporals.format(post.deadline, 'yyyy-MM-dd')}">마감일</td>
+            <td><a th:href="@{'/post/view/' + ${post.postId}}">상세보기</a></td>
+        </tr>
+        </tbody>
+    </table>
+
+
+</div>
+
+</body>
+</html>

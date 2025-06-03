@@ -1,9 +1,75 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head><title>공고 상세</title></head>
+<head>
+    <meta charset="UTF-8">
+    <title>공고 상세</title>
+    <style>
+        nav a {
+            margin: 0 15px;
+            text-decoration: none;
+            color: black;
+        }
+
+        .header {
+            border-bottom: 1px solid #aaa;
+            padding: 10px;
+        }
+    </style>
+</head>
 <body>
-  <h2 th:text="${post.title}">제목</h2>
-  <p th:text="${post.content}">내용</p>
-  <a th:href="@{|/apply/${post.id}|}">지원하기</a>
+
+<div class="container">
+    <div class="header">
+
+        <h2 style="color:#5f83d6;">
+            <a th:href="@{/member/main}" style="text-decoration: none; color: #5f83d6;">CodeFarm</a>
+        </h2>
+        <!-- 네비게이션 - 돌아가기 링크들 -->
+        <nav>
+            <a th:href="@{/post/all}">채용 공고</a>
+            <a th:href="@{/company}">기업 소개</a>
+            <a th:href="@{/board}">자유게시판</a>
+            <a th:href="@{/inquiry}">1:1문의</a>
+            <a href="#" onclick="goToMypage()">마이페이지</a>
+        </nav>
+    </div>
+
+    <div class="header-info">
+        <p><strong></strong> <span th:text="${post.title}">제목</span></p>
+        <p><strong>급여:</strong> <span th:text="${post.salary}">급여</span></p>
+        <p><strong>주소:</strong> <span th:text="${post.address}">주소</span></p>
+        <p><strong>마감:</strong> <span th:text="${#temporals.format(post.deadline, 'yyyy-MM-dd')}">마감일</span></p>
+        <p><strong>등록일:</strong> <span th:text="${#temporals.format(post.postedDate, 'yyyy-MM-dd HH:mm')}">등록일</span>
+        </p>
+    </div>
+
+    <!-- 개인회원만 지원하기 버튼을 볼 수 있음 -->
+    <div th:if="${session.loginMember != null and session.loginMember.membershipTypeId == 2}">
+        <form th:action="@{/application/apply}" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="postId" th:value="${post.postId}"/>
+            <input type="hidden" name="memberNo" th:value="${session.loginMember.memberNo}"/>
+            <label>이력서: <input type="file" name="resume" required/></label><br/>
+            <button type="submit">공고 지원</button>
+        </form>
+    </div>
+
+    <div class="post-details">
+        <p><strong>설명:</strong><br><span th:text="${post.description}">설명</span></p>
+    </div>
+
+    <script th:inline="javascript">
+        function goToMypage() {
+            const isLoggedIn = /*[[${session.loginMember != null}]]*/ false;
+            if (isLoggedIn) {
+                window.location.href = '/member/mypage';
+            } else {
+                alert('로그인이 필요합니다. 로그인 페이지로 이동합니다.');
+                window.location.href = '/member/login';
+            }
+        }
+    </script>
+
+</div>
+
 </body>
 </html>
