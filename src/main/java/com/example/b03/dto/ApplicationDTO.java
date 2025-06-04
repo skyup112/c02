@@ -1,6 +1,8 @@
 package com.example.b03.dto;
 
 import lombok.*;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -15,6 +17,8 @@ public class ApplicationDTO {
     private LocalDateTime submittedAt;
     private LocalDateTime updatedAt;
 
-    private String postTitle;     // 공고 제목
+    private String postTitle;
+
+    private LocalDate deadline;
 
 }

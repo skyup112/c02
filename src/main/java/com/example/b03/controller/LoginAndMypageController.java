@@ -1,10 +1,11 @@
 package com.example.b03.controller;
 
-import com.example.b03.domain.Member;
 import com.example.b03.dto.ApplicationDTO;
+import com.example.b03.dto.CompanyInfoDTO;
 import com.example.b03.dto.MemberDTO;
 import com.example.b03.dto.PostDTO;
 import com.example.b03.service.ApplicationService;
+import com.example.b03.service.CompanyInfoService;
 import com.example.b03.service.MemberService;
 import com.example.b03.service.PostService;
 import jakarta.servlet.http.HttpSession;
@@ -17,17 +18,18 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/member")
 @RequiredArgsConstructor
-public class LoginViewController {
+public class LoginAndMypageController {
 
     private final MemberService memberService;
     private final ApplicationService applicationService;
     private final PostService postService;
+    private final CompanyInfoService companyInfoService;
 
     @GetMapping("/login")
     public String loginPage(@ModelAttribute("message") String message, Model model) {
@@ -50,8 +52,6 @@ public class LoginViewController {
 
     @PostMapping("/register")
     public String submitRegister(MemberDTO dto, RedirectAttributes redirectAttributes) {
-
-        // 유효성 검사 추가
         if (!memberService.isValidPassword(dto.getPassword())) {
             redirectAttributes.addFlashAttribute("message", "비밀번호는 8자 이상, 영문+숫자+특수문자 포함, 같은 문자 반복 불가입니다.");
             return "redirect:/member/register?type=" + dto.getMembershipTypeId();
@@ -67,13 +67,8 @@ public class LoginViewController {
                                @RequestParam String password,
                                HttpSession session,
                                RedirectAttributes redirectAttributes) {
-        if (loginId == null || loginId.isBlank()) {
-            redirectAttributes.addFlashAttribute("error", "아이디를 입력해주세요.");
-            return "redirect:/member/login";
-        }
-
-        if (password == null || password.isBlank()) {
-            redirectAttributes.addFlashAttribute("error", "비밀번호를 입력해주세요.");
+        if (loginId.isBlank() || password.isBlank()) {
+            redirectAttributes.addFlashAttribute("error", "아이디와 비밀번호를 모두 입력해주세요.");
             return "redirect:/member/login";
         }
 
@@ -101,14 +96,12 @@ public class LoginViewController {
 
     @GetMapping("/mypage")
     public String mypage(HttpSession session, Model model) {
-        Object loginMemberObj = session.getAttribute("loginMember");
-
-        if (loginMemberObj == null) {
+        MemberDTO loginMember = (MemberDTO) session.getAttribute("loginMember");
+        if (loginMember == null) {
             model.addAttribute("error", "로그인 후 이용 가능합니다.");
             return "project/mypage/mypage-guest";
         }
 
-        MemberDTO loginMember = (MemberDTO) loginMemberObj;
         model.addAttribute("member", loginMember);
 
         Byte typeId = loginMember.getMembershipTypeId();
@@ -117,21 +110,32 @@ public class LoginViewController {
             return "project/mypage/mypage-guest";
         }
 
+        if (typeId == 1) {
+            // 관리자
+            return "project/mypage/mypage-admin";
+        }
+
         if (typeId == 2) {
+            // 개인 회원
             List<ApplicationDTO> applications = applicationService.getApplicationsByMember(loginMember.getMemberNo());
             model.addAttribute("applications", applications);
+            return "project/mypage/mypage-user";
         }
 
         if (typeId == 3) {
+            // 기업 회원
+            try {
+                CompanyInfoDTO companyInfo = companyInfoService.getByMemberNo(loginMember.getMemberNo());
+                model.addAttribute("companyInfo", companyInfo);
+            } catch (NoSuchElementException e) {
+                // 🔴 회사 정보가 없는 경우 등록 페이지로 이동
+                return "redirect:/member/company/edit";
+            }
+
             List<PostDTO> posts = postService.getPostsByCompany(loginMember.getMemberNo());
             model.addAttribute("posts", posts);
-        }
 
-        if (loginMember.getMembershipTypeId() == 3) {
-            // 전체 공고에 대한 지원서 조회
             List<ApplicationDTO> applications = applicationService.getApplicationsByCompany(loginMember.getMemberNo());
-
-            // DTO → Map 으로 바꾸고, 지원자 이름/전화번호 포함시킬 수 있다면 따로 확장
             List<Map<String, Object>> applicantInfos = applications.stream().map(app -> {
                 Map<String, Object> map = new HashMap<>();
                 map.put("applicationId", app.getApplicationId());
@@ -139,78 +143,84 @@ public class LoginViewController {
                 map.put("postTitle", app.getPostTitle());
                 map.put("filePath", app.getFilePath());
                 map.put("submittedAt", app.getSubmittedAt());
-
-                // 🔽 이름/전화번호도 포함하려면 추가 정보가 필요함 (ApplicationDTO 확장 필요)
                 MemberDTO member = memberService.getByMemberNo(app.getMemberNo()).orElse(null);
                 if (member != null) {
                     map.put("applicantName", member.getName());
                     map.put("applicantPhone", member.getPhone());
                 }
-
                 return map;
-            }).collect(Collectors.toList());
-
+            }).toList();
             model.addAttribute("applicants", applicantInfos);
+
+            return "project/mypage/mypage-company";
         }
 
-        switch (typeId) {
-            case 1:
-                return "project/mypage/mypage-admin";
-            case 2:
-                return "project/mypage/mypage-user";
-            case 3:
-                return "project/mypage/mypage-company";
-            default:
-                model.addAttribute("error", "알 수 없는 회원 유형입니다.");
-                return "project/mypage/mypage-guest";
+
+        return "project/mypage/mypage-guest"; // fallback
+    }
+
+    @GetMapping("/applicants/{postId}")
+    public String viewApplicantsForPost(@PathVariable Integer postId,
+                                        HttpSession session,
+                                        Model model,
+                                        RedirectAttributes redirectAttributes) {
+        MemberDTO loginMember = (MemberDTO) session.getAttribute("loginMember");
+
+        if (loginMember == null || loginMember.getMembershipTypeId() != 3) {
+            redirectAttributes.addFlashAttribute("error", "접근 권한이 없습니다.");
+            return "redirect:/member/login";
         }
+
+        PostDTO post = postService.getPostById(postId);
+        if (post == null || !post.getMemberNo().equals(loginMember.getMemberNo())) {
+            redirectAttributes.addFlashAttribute("error", "해당 공고에 접근할 수 없습니다.");
+            return "redirect:/member/mypage";
+        }
+
+        List<Map<String, Object>> applicantInfos = applicationService
+                .getApplicationsWithMemberInfoByPostAndCompany(postId, loginMember.getMemberNo());
+
+        model.addAttribute("post", post);
+        model.addAttribute("applicants", applicantInfos);
+        return "project/mypage/applicants-for-post";
     }
 
     @GetMapping("/logout")
     public String logout(HttpSession session) {
-        session.invalidate(); // 로그인 세션 제거
-        return "redirect:/member/main"; // 로그인 페이지로 이동
+        session.invalidate();
+        return "redirect:/member/main";
     }
 
     @GetMapping("/main")
     public String mainPage(HttpSession session, Model model) {
         MemberDTO loginMember = (MemberDTO) session.getAttribute("loginMember");
-
         if (loginMember != null) {
             model.addAttribute("name", loginMember.getName());
         }
-
-        return "project/main"; // => src/main/resources/templates/member/main.html
+        return "project/main";
     }
 
-    // GET: 수정 페이지 보여주기
     @GetMapping("/edit")
     public String showEditForm(HttpSession session, Model model) {
         MemberDTO loginMember = (MemberDTO) session.getAttribute("loginMember");
-
         if (loginMember == null) {
             return "redirect:/member/login";
         }
-
         model.addAttribute("member", loginMember);
         return "project/mypage/edit-user";
     }
 
     @PostMapping("/edit")
-    public String updateMemberInfo(
-            @ModelAttribute MemberDTO dto,
-            @RequestParam String confirmPassword,
-            HttpSession session,
-            RedirectAttributes redirectAttributes
-    ) {
+    public String updateMemberInfo(@ModelAttribute MemberDTO dto,
+                                   @RequestParam String confirmPassword,
+                                   HttpSession session,
+                                   RedirectAttributes redirectAttributes) {
         MemberDTO loginMember = (MemberDTO) session.getAttribute("loginMember");
-
         if (loginMember == null) {
             redirectAttributes.addFlashAttribute("error", "로그인이 필요합니다.");
             return "redirect:/member/login";
         }
 
-        // ✅ 비밀번호 확인
         if (!loginMember.getPassword().equals(confirmPassword)) {
             redirectAttributes.addFlashAttribute("error", "비밀번호가 일치하지 않습니다.");
             return "redirect:/member/edit";
@@ -222,10 +232,7 @@ public class LoginViewController {
         dto.setMembershipTypeId(loginMember.getMembershipTypeId());
 
         memberService.update(dto);
-
-        // 최신 정보로 세션 갱신
-        MemberDTO refreshed = memberService.getMemberByLoginId(loginMember.getLoginId());
-        session.setAttribute("loginMember", refreshed);
+        session.setAttribute("loginMember", memberService.getMemberByLoginId(loginMember.getLoginId()));
 
         redirectAttributes.addFlashAttribute("message", "회원 정보가 수정되었습니다.");
         return "redirect:/member/mypage";
@@ -235,29 +242,22 @@ public class LoginViewController {
     public String deleteMember(@RequestParam String confirmPassword,
                                HttpSession session,
                                RedirectAttributes redirectAttributes) {
-
         MemberDTO loginMember = (MemberDTO) session.getAttribute("loginMember");
 
-        if (loginMember == null) {
-            redirectAttributes.addFlashAttribute("error", "로그인이 필요합니다.");
-            return "redirect:/member/login";
-        }
-
-        if (!loginMember.getPassword().equals(confirmPassword)) {
-            redirectAttributes.addFlashAttribute("error", "비밀번호가 일치하지 않습니다.");
+        if (loginMember == null || !loginMember.getPassword().equals(confirmPassword)) {
+            redirectAttributes.addFlashAttribute("error", "비밀번호가 일치하지 않거나 로그인되지 않았습니다.");
             return "redirect:/member/mypage";
         }
 
         memberService.deactivateMember(loginMember.getMemberNo());
-        session.invalidate();  // 로그아웃
-
+        session.invalidate();
         redirectAttributes.addFlashAttribute("message", "회원 탈퇴가 완료되었습니다.");
         return "redirect:/member/login";
     }
 
     @GetMapping("/password-change")
     public String passwordChangeForm() {
-        return "project/mypage/password-change";  // view 경로 맞춰주세요
+        return "project/mypage/password-change";
     }
 
     @PostMapping("/password-change")
@@ -284,7 +284,6 @@ public class LoginViewController {
             return "redirect:/member/password-change";
         }
 
-        // ✅ 유효성 검사
         if (!memberService.isValidPassword(newPassword)) {
             redirectAttributes.addFlashAttribute("error", "비밀번호는 8자 이상, 영문+숫자+특수문자 포함, 같은 문자 반복 불가입니다.");
             return "redirect:/member/password-change";
@@ -295,5 +294,4 @@ public class LoginViewController {
         redirectAttributes.addFlashAttribute("message", "비밀번호가 변경되었습니다. 다시 로그인 해주세요.");
         return "redirect:/member/login";
     }
-
 }

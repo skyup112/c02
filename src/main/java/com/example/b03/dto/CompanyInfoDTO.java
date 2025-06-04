@@ -1,12 +1,18 @@
 package com.example.b03.dto;
 
-import lombok.*;
+import com.example.b03.domain.CompanyInfo;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 public class CompanyInfoDTO {
     private Integer memberNo;
     private String companyName;
@@ -14,7 +20,28 @@ public class CompanyInfoDTO {
     private Integer employeeCount;
     private Long revenue;
     private String techStack;
-    private String location;
     private String homepageUrl;
     private String description;
+
+    //  Member에서 가져온 값
+    private String phone;
+    private String address;
+
+    private List<String> jobCategoryNames;
+
+    public static CompanyInfoDTO fromEntity(CompanyInfo companyInfo) {
+        return CompanyInfoDTO.builder()
+                .memberNo(companyInfo.getMember().getMemberNo())
+                .companyName(companyInfo.getCompanyName())
+                .foundedDate(companyInfo.getFoundedDate())
+                .employeeCount(companyInfo.getEmployeeCount())
+                .revenue(companyInfo.getRevenue())
+                .techStack(companyInfo.getTechStack())
+                .homepageUrl(companyInfo.getHomepageUrl())
+                .description(companyInfo.getDescription())
+                .address(companyInfo.getMember().getAddress())  // 주소 매핑
+                .phone(companyInfo.getMember().getPhone())      // 전화번호 매핑
+                .build();
+    }
 }
+

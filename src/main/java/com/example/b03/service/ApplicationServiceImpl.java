@@ -7,7 +7,6 @@ import com.example.b03.dto.ApplicationDTO;
 import com.example.b03.repository.ApplicationRepository;
 import com.example.b03.repository.MemberRepository;
 import com.example.b03.repository.PostRepository;
-import com.example.b03.service.ApplicationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -32,10 +31,8 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     public ApplicationDTO create(ApplicationDTO dto) {
-        Member member = memberRepository.findById(dto.getMemberNo())
-                .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
-        Post post = postRepository.findById(dto.getPostId())
-                .orElseThrow(() -> new IllegalArgumentException("공고가 존재하지 않습니다."));
+        Member member = getMember(dto.getMemberNo());
+        Post post = getPost(dto.getPostId());
 
         Application application = Application.builder()
                 .member(member)
@@ -85,19 +82,14 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     public void applyToPost(ApplicationDTO dto, MultipartFile file) {
-        Member member = memberRepository.findById(dto.getMemberNo())
-                .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
-        Post post = postRepository.findById(dto.getPostId())
-                .orElseThrow(() -> new IllegalArgumentException("공고가 존재하지 않습니다."));
+        Member member = getMember(dto.getMemberNo());
+        Post post = getPost(dto.getPostId());
 
         if (applicationRepository.existsByPostAndMember(post, member)) {
             throw new IllegalStateException("이미 지원한 공고입니다.");
         }
 
-        String filePath = null;
-        if (file != null && !file.isEmpty()) {
-            filePath = saveFile(file);
-        }
+        String filePath = file != null && !file.isEmpty() ? saveFile(file) : null;
 
         Application application = Application.builder()
                 .member(member)
@@ -112,40 +104,35 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     private String saveFile(MultipartFile file) {
         String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-        File dest = new File(uploadDir + File.separator + fileName);
+        File dir = new File(uploadDir);
+        if (!dir.exists()) dir.mkdirs();
 
+        File dest = new File(dir, fileName);
         try {
             file.transferTo(dest);
         } catch (IOException e) {
             throw new RuntimeException("파일 저장 실패", e);
         }
 
-        // 상대 경로 반환
-        return "/uploads/" + fileName;  // 웹에서 접근할 수 있는 경로로 수정
+        // ✅ DB에는 브라우저 접근 가능한 경로 저장 (예: "/uploads/파일명.pdf")
+        return "/uploads/" + fileName;
     }
 
     @Override
     public List<ApplicationDTO> getApplicationsByCompany(Integer companyMemberNo) {
-        Member company = memberRepository.findById(companyMemberNo)
-                .orElseThrow(() -> new IllegalArgumentException("기업 회원이 존재하지 않습니다."));
+        Member company = getMember(companyMemberNo);
         return applicationRepository.findByPost_Company_Member(company)
                 .stream().map(this::toDTO).collect(Collectors.toList());
     }
 
     @Override
     public boolean isDuplicateApplication(Integer postId, Integer memberNo) {
-        Member member = memberRepository.findById(memberNo)
-                .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("공고가 존재하지 않습니다."));
-        return applicationRepository.existsByPostAndMember(post, member);
+        return applicationRepository.existsByPostAndMember(getPost(postId), getMember(memberNo));
     }
 
     @Override
     public List<ApplicationDTO> getApplicationsByPostAndCompany(Integer postId, Integer companyMemberNo) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("공고가 존재하지 않습니다."));
-
+        Post post = getPost(postId);
         if (!post.getCompany().getMember().getMemberNo().equals(companyMemberNo)) {
             throw new IllegalArgumentException("해당 공고에 접근할 수 없습니다.");
         }
@@ -157,26 +144,19 @@ public class ApplicationServiceImpl implements ApplicationService {
     @Override
     public List<ApplicationDTO> getApplicationsByMember(Integer memberNo) {
         return applicationRepository.findByMember_MemberNo(memberNo).stream()
-                .sorted(Comparator.comparing(Application::getSubmittedAt).reversed()) // 최신순 정렬
+                .sorted(Comparator.comparing(Application::getSubmittedAt).reversed())
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
 
-
     @Override
     public List<Map<String, Object>> getApplicationsWithMemberInfoByPostAndCompany(Integer postId, Integer companyMemberNo) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("공고가 존재하지 않습니다."));
-
+        Post post = getPost(postId);
         if (!post.getCompany().getMember().getMemberNo().equals(companyMemberNo)) {
-            throw new IllegalArgumentException("해당 공고에 접근 권한이 없습니다.");
+            throw new IllegalArgumentException("접근 권한이 없습니다.");
         }
 
-
-
-        List<Application> applications = applicationRepository.findByPost_PostId(postId);
-
-        return applications.stream().map(application -> {
+        return applicationRepository.findByPost_PostId(postId).stream().map(application -> {
             Map<String, Object> map = new HashMap<>();
             map.put("applicationId", application.getApplicationId());
             map.put("postId", application.getPost().getPostId());
@@ -190,15 +170,42 @@ public class ApplicationServiceImpl implements ApplicationService {
         }).collect(Collectors.toList());
     }
 
+    private Member getMember(Integer memberNo) {
+        return memberRepository.findById(memberNo)
+                .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
+    }
+
+    private Post getPost(Integer postId) {
+        return postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("공고가 존재하지 않습니다."));
+    }
+
     private ApplicationDTO toDTO(Application application) {
         return ApplicationDTO.builder()
                 .applicationId(application.getApplicationId())
                 .memberNo(application.getMember().getMemberNo())
                 .postId(application.getPost().getPostId())
-                .postTitle(application.getPost().getTitle()) // ← 추가
+                .postTitle(application.getPost().getTitle())
                 .filePath(application.getFilePath())
                 .submittedAt(application.getSubmittedAt())
                 .updatedAt(application.getUpdatedAt())
+                .deadline(application.getPost().getDeadline()) // 🔹 여기에서 Post의 마감일 포함
                 .build();
+    }
+
+    @Override
+    public List<ApplicationDTO> getApplicationsByPost(Integer postId) {
+        List<Application> entities = applicationRepository.findByPost_PostId(postId);
+
+        return entities.stream()
+                .map(application -> ApplicationDTO.builder()
+                        .applicationId(application.getApplicationId())
+                        .postId(application.getPost().getPostId())
+                        .postTitle(application.getPost().getTitle())
+                        .memberNo(application.getMember().getMemberNo())
+                        .filePath(application.getFilePath())
+                        .submittedAt(application.getSubmittedAt())
+                        .build())
+                .collect(Collectors.toList());
     }
 }

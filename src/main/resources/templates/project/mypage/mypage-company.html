@@ -1,3 +1,4 @@
+<!-- ✅ 기업회원 마이페이지: mypage-company.html -->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -11,38 +12,53 @@
     </style>
 </head>
 <body>
-
 <div style="background-color: #f2f2f2; padding: 10px;">
     <a th:href="@{/member/main}">🏠 메인으로</a>
 </div>
-
 <div class="container">
     <div class="menu">
         <h4>📂 메뉴</h4>
-        <a href="#" onclick="showSection('info')">기업 정보</a>
+        <a href="#" onclick="showSection('info')">기업 가입 정보</a>
+        <a href="#" onclick="showSection('companyinfo')">기업 정보</a>
         <a href="#" onclick="showSection('posts')">공고 관리</a>
         <a href="#" onclick="showSection('applicants')">지원자 관리</a>
         <a href="#" onclick="showSection('edit')">회원 정보 수정</a>
     </div>
-
     <div class="content">
-        <!-- 기업 정보 -->
         <div id="info" style="display: block;">
-            <h3>📌 기업 정보</h3>
+            <h3>📌 기업 가입 정보</h3>
             <p>기업명: <span th:text="${member.name}"></span></p>
             <p>설립일자: <span th:text="${member.birthDate}"></span></p>
             <p>전화번호: <span th:text="${member.phone}"></span></p>
             <p>주소: <span th:text="${member.address}"></span></p>
         </div>
 
-        <!-- 공고 관리 -->
+        <div id="companyinfo" style="display: block;">
+            <h3>📌 기업 정보</h3>
+            <p>기업명: <span th:text="${companyInfo.companyName}">-</span></p>
+            <p>설립일자: <span th:text="${companyInfo.foundedDate}">-</span></p>
+            <p>직원 수: <span th:text="${companyInfo.employeeCount}">-</span></p>
+            <p>매출액: <span th:text="${companyInfo.revenue}">-</span></p>
+            <p>기술 스택: <span th:text="${companyInfo.techStack}">-</span></p>
+            <p>홈페이지:
+                <a th:href="${companyInfo.homepageUrl}" th:text="${companyInfo.homepageUrl}" target="_blank">홈페이지 방문</a>
+            </p>
+            <p>전화번호: <span th:text="${companyInfo.phone}">-</span></p>
+            <p>주소: <span th:text="${companyInfo.address}">-</span></p>
+            <p>기업 소개: <span th:text="${companyInfo.description}">-</span></p>
+
+            <!-- 🔽 수정 버튼 추가 -->
+            <button th:attr="onclick=|location.href='/company/modify?memberNo=${member.memberNo}'|">
+                기업 정보 수정
+            </button>
+
+        </div>
+
         <div id="posts" style="display: none;">
             <h3>📄 공고 관리</h3>
-
             <div th:if="${#lists.isEmpty(posts)}">
                 <p>등록된 공고가 없습니다.</p>
             </div>
-
             <div th:unless="${#lists.isEmpty(posts)}">
                 <table border="1" cellpadding="5" style="width: 100%; text-align: center;">
                     <thead>
@@ -73,19 +89,15 @@
                     </tbody>
                 </table>
             </div>
-
             <br/>
             <button onclick="location.href='/post/create'">📢 새 공고 등록</button>
         </div>
 
-        <!-- 지원자 관리 -->
         <div id="applicants" style="display: none;">
             <h3>👥 지원자 목록</h3>
-
             <div th:if="${#lists.isEmpty(applicants)}">
                 <p>지원자가 없습니다.</p>
             </div>
-
             <div th:unless="${#lists.isEmpty(applicants)}">
                 <table border="1" cellpadding="5" style="width: 100%; text-align: center;">
                     <thead>
@@ -99,20 +111,30 @@
                     </thead>
                     <tbody>
                     <tr th:each="app : ${applicants}">
-                        <td th:text="${app.postTitle}"></td>
-                        <td th:text="${app.applicantName}"></td>
-                        <td th:text="${app.applicantPhone}"></td>
-                        <td th:text="${#temporals.format(app.submittedAt, 'yyyy-MM-dd')}"></td>
                         <td>
-                            <a th:if="${app.filePath}" th:href="@{'/files/' + ${app.filePath}}" target="_blank">다운로드</a>
+                            <a href="#" th:onclick="'showPostDetail(' + ${app.postId} + ');return false;'"
+                               th:text="${app.postTitle}">공고 제목</a>
+                        </td>
+                        <td th:text="${app.applicantName}">이름</td>
+                        <td th:text="${app.applicantPhone}">전화번호</td>
+                        <td th:text="${#temporals.format(app.submittedAt, 'yyyy-MM-dd')}">지원일</td>
+                        <td>
                             <span th:if="${app.filePath == null}">없음</span>
+                            <a th:href="@{${app.filePath}}" target="_blank">다운로드</a>
                         </td>
                     </tr>
                     </tbody>
                 </table>
             </div>
+            <div id="post-detail-box" style="display:none; margin-top:20px; border:1px solid #ccc; padding:15px;">
+                <h3>📌 공고 상세</h3>
+                <p><strong>제목:</strong> <span id="post-title"></span></p>
+                <p><strong>설명:</strong> <span id="post-description"></span></p>
+                <p><strong>마감일:</strong> <span id="post-deadline"></span></p>
+                <button onclick="document.getElementById('post-detail-box').style.display='none';">닫기</button>
+            </div>
         </div>
-        <!-- 회원 정보 수정 -->
+
         <div id="edit" style="display: none;">
             <h3>🛠️ 회원 정보 수정</h3>
             <button onclick="location.href='/member/edit'">회원 정보 수정</button>
@@ -126,7 +148,21 @@
         document.querySelectorAll('.content > div').forEach(div => div.style.display = 'none');
         document.getElementById(id).style.display = 'block';
     }
-</script>
 
+    function showPostDetail(postId) {
+        fetch('/api/post/' + postId)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('post-title').innerText = data.title;
+                document.getElementById('post-description').innerText = data.description;
+                document.getElementById('post-deadline').innerText = data.deadline;
+                document.getElementById('post-detail-box').style.display = 'block';
+            })
+            .catch(err => {
+                alert("공고 정보를 불러오지 못했습니다.");
+                console.error(err);
+            });
+    }
+</script>
 </body>
 </html>

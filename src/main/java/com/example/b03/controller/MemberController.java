@@ -1,6 +1,7 @@
 package com.example.b03.controller;
 
 import com.example.b03.dto.MemberDTO;
+import com.example.b03.service.CompanyInfoService;
 import com.example.b03.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

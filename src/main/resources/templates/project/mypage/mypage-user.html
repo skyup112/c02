@@ -5,45 +5,25 @@
     <title>개인회원 마이페이지</title>
     <style>
         .container { display: flex; }
-        .sidebar {
-            width: 200px;
-            background-color: #f2f2f2;
-            padding: 20px;
-            height: 100vh;
-        }
-        .sidebar a {
-            display: block;
-            margin-bottom: 10px;
-            text-decoration: none;
-        }
-        .content {
-            flex: 1;
-            padding: 20px;
-        }
-        .nav-top {
-            background-color: #e9e9e9;
-            padding: 10px;
-        }
+        .sidebar { width: 200px; background-color: #f2f2f2; padding: 20px; height: 100vh; }
+        .sidebar a { display: block; margin-bottom: 10px; text-decoration: none; }
+        .content { flex: 1; padding: 20px; }
+        .nav-top { background-color: #e9e9e9; padding: 10px; }
+        .red-text { color: red; }
     </style>
 </head>
 <body>
-
 <div class="nav-top">
     <a th:href="@{/member/main}">🏠 메인으로</a>
 </div>
-
 <div class="container">
-    <!-- 좌측 메뉴 -->
     <div class="sidebar">
         <strong>📁 마이페이지 메뉴</strong>
         <a href="#" onclick="showSection('info')">회원 정보</a>
         <a href="#" onclick="showSection('history')">지원 내역</a>
         <a href="#" onclick="showSection('settings')">정보 수정</a>
     </div>
-
-    <!-- 우측 콘텐츠 -->
     <div class="content">
-        <!-- 회원 정보 -->
         <div id="section-info" style="display:block;">
             <h2>회원 정보</h2>
             <p>이름: <span th:text="${member.name}"></span></p>
@@ -52,40 +32,43 @@
             <p>주소: <span th:text="${member.address}"></span></p>
         </div>
 
-        <!-- 지원 내역 -->
         <div id="section-history" style="display:none;">
             <h2>지원 내역</h2>
-
             <div th:if="${#lists.isEmpty(applications)}">
                 <p>지원한 공고가 없습니다.</p>
             </div>
-
             <div th:unless="${#lists.isEmpty(applications)}">
                 <table border="1" cellpadding="5" style="width:100%; text-align:center;">
                     <thead>
                     <tr>
                         <th>공고 제목</th>
                         <th>지원일</th>
-                        <th>파일</th>
+                        <th>마감일</th> <!-- ✅ 수정된 부분 -->
                     </tr>
                     </thead>
                     <tbody>
                     <tr th:each="app : ${applications}">
-                        <td th:text="${app.postTitle}"></td>
-                        <td th:text="${#temporals.format(app.submittedAt, 'yyyy-MM-dd')}"></td>
                         <td>
-                            <a th:href="@{${'/files/' + app.filePath}}" target="_blank"
-                               th:text="${app.filePath != null ? '다운로드' : '없음'}"></a>
+                            <a href="#" th:onclick="'showPostDetail(' + ${app.postId} + ');return false;'"
+                               th:text="${app.postTitle}">공고 제목</a>
                         </td>
+                        <td th:text="${#temporals.format(app.submittedAt, 'yyyy-MM-dd')}">지원일</td>
+                        <td class="red-text" th:text="${#temporals.format(app.deadline, 'yyyy-MM-dd')}">마감일</td>
                     </tr>
                     </tbody>
                 </table>
             </div>
+            <div id="post-detail-box" style="display:none; margin-top:20px; border:1px solid #ccc; padding:15px;">
+                <h3>📌 공고 상세</h3>
+                <p><strong>제목:</strong> <span id="post-title"></span></p>
+                <p><strong>설명:</strong> <span id="post-description"></span></p>
+                <p><strong>마감일:</strong> <span id="post-deadline"></span></p>
+                <button onclick="document.getElementById('post-detail-box').style.display='none';">닫기</button>
+            </div>
         </div>
-        <!-- 정보 수정 섹션 -->
+
         <div id="section-settings" style="display:none;">
             <h2>정보 수정</h2>
-            <p>회원 정보와 비밀번호를 수정할 수 있습니다.</p>
             <button onclick="location.href='/member/edit'">회원 정보 수정</button>
             <button onclick="location.href='/member/password-change'">비밀번호 변경</button>
         </div>
@@ -97,10 +80,23 @@
         document.getElementById("section-info").style.display = 'none';
         document.getElementById("section-history").style.display = 'none';
         document.getElementById("section-settings").style.display = 'none';
-
         document.getElementById("section-" + section).style.display = 'block';
     }
-</script>
 
+    function showPostDetail(postId) {
+        fetch('/api/post/' + postId)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('post-title').innerText = data.title;
+                document.getElementById('post-description').innerText = data.description;
+                document.getElementById('post-deadline').innerText = data.deadline;
+                document.getElementById('post-detail-box').style.display = 'block';
+            })
+            .catch(err => {
+                alert("공고 정보를 불러오지 못했습니다.");
+                console.error(err);
+            });
+    }
+</script>
 </body>
 </html>

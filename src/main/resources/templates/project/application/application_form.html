@@ -1,0 +1,23 @@
+<!-- src/main/resources/templates/application/application_form.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>지원서 작성</title>
+</head>
+<body>
+<h2>지원서 작성</h2>
+
+<form th:action="@{/application/apply}" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="postId" th:value="${postId}" />
+    <input type="hidden" name="memberNo" th:value="${memberNo}" />
+
+    <label>이력서 파일:</label>
+    <input type="file" name="file" required />
+
+    <br><br>
+    <button type="submit">제출</button>
+</form>
+
+</body>
+</html>

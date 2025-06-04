@@ -34,8 +34,8 @@
     </h2>
 
     <nav>
-        <a th:href="@{/post/all}">채용 공고</a>
-        <a th:href="@{/company}">기업 소개</a>
+        <a href="#" onclick="goToPost()">채용 공고</a>
+        <a href="#" onclick="goToConpany()">기업 소개</a>
         <a th:href="@{/board}">자유게시판</a>
         <a th:href="@{/inquiry}">1:1문의</a>
         <a href="#" onclick="goToMypage()">마이페이지</a>
@@ -59,6 +59,28 @@
         const isLoggedIn = /*[[${session.loginMember != null}]]*/ false;
         if (isLoggedIn) {
             window.location.href = '/member/mypage';
+        } else {
+            alert('로그인이 필요합니다. 로그인 페이지로 이동합니다.');
+            window.location.href = '/member/login';
+        }
+    }
+</script>
+<script th:inline="javascript">
+    function goToPost() {
+        const isLoggedIn = /*[[${session.loginMember != null}]]*/ false;
+        if (isLoggedIn) {
+            window.location.href = '/post/all';
+        } else {
+            alert('로그인이 필요합니다. 로그인 페이지로 이동합니다.');
+            window.location.href = '/member/login';
+        }
+    }
+</script>
+<script th:inline="javascript">
+    function goToConpany() {
+        const isLoggedIn = /*[[${session.loginMember != null}]]*/ false;
+        if (isLoggedIn) {
+            window.location.href = '../company/list';
         } else {
             alert('로그인이 필요합니다. 로그인 페이지로 이동합니다.');
             window.location.href = '/member/login';

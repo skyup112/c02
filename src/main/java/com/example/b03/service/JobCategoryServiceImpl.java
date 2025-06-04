@@ -1,36 +1,28 @@
 package com.example.b03.service;
 
 import com.example.b03.domain.JobCategory;
+import com.example.b03.dto.JobCategoryDTO;
 import com.example.b03.repository.JobCategoryRepository;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class JobCategoryServiceImpl implements JobCategoryService {
 
-    private final JobCategoryRepository repository;
+    private final JobCategoryRepository jobCategoryRepository;
+    private final ModelMapper modelMapper;
 
     @Override
-    public List<JobCategory> getAllCategories() {
-        return repository.findAll();
-    }
-
-    @Override
-    public JobCategory getCategoryById(Integer id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("카테고리가 존재하지 않습니다."));
-    }
-
-    @Override
-    public JobCategory createCategory(JobCategory category) {
-        return repository.save(category);
-    }
-
-    @Override
-    public void deleteCategory(Integer id) {
-        repository.deleteById(id);
+    public List<JobCategoryDTO> getAll() {
+        List<JobCategory> categories = jobCategoryRepository.findAll();
+        return categories.stream()
+                .map(category -> modelMapper.map(category, JobCategoryDTO.class))
+                .collect(Collectors.toList());
     }
 }
+

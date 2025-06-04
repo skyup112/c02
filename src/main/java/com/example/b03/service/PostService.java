@@ -10,10 +10,10 @@ public interface PostService {
     PostDTO createPost(PostDTO dto);
     PostDTO updatePost(PostDTO dto);
     void deletePost(Integer postId);
-    PostDTO getPost(Integer postId);
+//    PostDTO getPost(Integer postId);
     List<PostDTO> getPostsByCompany(Integer memberNo); // 기업 회원 전용
     // 모든 공고 목록 조회 (최신순)
     List<PostDTO> getAllPosts(); // 모든 공고를 최신순으로 조회
-
+    PostDTO getPostById(Integer postId);
 
 }

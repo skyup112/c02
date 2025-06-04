@@ -35,7 +35,7 @@ public class PostServiceImpl implements PostService {
                 .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
 
         // 2. 해당 회원의 기업 정보(CompanyInfo) 조회
-        CompanyInfo companyInfo = companyInfoRepository.findByMember(member)
+        CompanyInfo companyInfo = companyInfoRepository.findByMember_MemberNo(member.getMemberNo())
                 .orElseThrow(() -> new IllegalArgumentException("기업 정보가 존재하지 않습니다."));
 
         // 3. Post 엔티티 생성
@@ -76,7 +76,7 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public PostDTO getPost(Integer postId) {
+    public PostDTO getPostById(Integer postId) {  // ✅ 이름 일치시킴
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("공고가 존재하지 않습니다."));
         return toDTO(post);

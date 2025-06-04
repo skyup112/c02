@@ -71,7 +71,7 @@ public class PostViewController {
     // 공고 상세 보기 (기업회원용)
     @GetMapping("/view/{id}")
     public String viewPost(@PathVariable Integer id, Model model) {
-        PostDTO post = postService.getPost(id);
+        PostDTO post = postService.getPostById(id);
         model.addAttribute("post", post);
         return "project/post/post-detail";
     }
@@ -79,7 +79,7 @@ public class PostViewController {
     // 공고 수정 폼
     @GetMapping("/edit/{id}")
     public String editPostForm(@PathVariable Integer id, Model model) {
-        PostDTO post = postService.getPost(id);
+        PostDTO post = postService.getPostById(id);
         List<Integer> selectedCategoryIds = postJobCategoryService.getJobCategoriesByPost(id)
                 .stream()
                 .map(pjc -> pjc.getJobCategory().getJobCategoryId())

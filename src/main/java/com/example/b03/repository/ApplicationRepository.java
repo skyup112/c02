@@ -28,4 +28,6 @@ public interface ApplicationRepository extends JpaRepository<Application, Intege
     List<Application> findApplicationsByCompanyMemberNo(@Param("companyMemberNo") Integer companyMemberNo);
 
     Optional<Application> findByPost_PostIdAndMember_MemberNo(Integer postId, Integer memberNo);
+
+    List<Application> findByPost_PostId(Long postId);
 }
