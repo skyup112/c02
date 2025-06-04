@@ -3,6 +3,8 @@ package com.example.b03.service;
 import com.example.b03.domain.CompanyInfo;
 import com.example.b03.domain.Member;
 import com.example.b03.domain.Post;
+import com.example.b03.dto.PageRequestDTO;
+import com.example.b03.dto.PageResponseDTO;
 import com.example.b03.dto.PostDTO;
 import com.example.b03.repository.CompanyInfoRepository;
 import com.example.b03.repository.MemberRepository;
@@ -13,6 +15,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -96,6 +101,41 @@ public class PostServiceImpl implements PostService {
                 .stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public PostDTO getPost(Integer postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("공고가 존재하지 않습니다."));
+        return toDTO(post);
+    }
+
+    @Override
+    public List<PostDTO> getPostsByCategoryId(Integer categoryId) {
+        List<Post> posts = postRepository.findByJobCategoryId(categoryId);
+        return posts.stream()
+                .map(this::toDTO)
+                .toList();
+    }
+    @Override
+    public PageResponseDTO<PostDTO> search(PageRequestDTO requestDTO, Integer categoryId) {
+        return postRepository.search(requestDTO,categoryId);
+    }
+
+    @Override
+    public PageResponseDTO<PostDTO> getPagedPosts(PageRequestDTO requestDTO) {
+        Pageable pageable = requestDTO.getPageable("postId");
+        Page<Post> result = postRepository.findAll(pageable);
+        List<PostDTO> dtoList = result.getContent().stream()
+                .map(this::toDTO)
+                .toList();
+
+        return PageResponseDTO.<PostDTO>builder()
+                .page(requestDTO.getPage())
+                .size(requestDTO.getSize())
+                .total((int) result.getTotalElements())
+                .dtoList(dtoList)
+                .build();
     }
 
     // Post -> PostDTO 변환

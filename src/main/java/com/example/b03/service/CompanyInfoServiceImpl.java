@@ -30,7 +30,7 @@ public class CompanyInfoServiceImpl implements CompanyInfoService {
     public CompanyInfoDTO register(CompanyInfoDTO dto) {
         Member member = memberRepository.findById(dto.getMemberNo())
                 .orElseThrow(() -> new NoSuchElementException("Member not found"));
-        if (member.getMembershipType() == null || member.getMembershipType().getTypeId() != 3) {
+        if (member.getMembershipType() == null || member.getMembershipType().getTypeId() != 2) {
             throw new IllegalArgumentException("해당 회원은 기업회원이 아닙니다.");
         }
 
@@ -95,8 +95,8 @@ public class CompanyInfoServiceImpl implements CompanyInfoService {
 
         // 기업회원 여부 확인
         if (existing.getMember().getMembershipType() == null ||
-                existing.getMember().getMembershipType().getTypeId() != 3) {
-            throw new IllegalArgumentException("해당 회원은 기업회원(MembershipType 3번)이 아닙니다.");
+                existing.getMember().getMembershipType().getTypeId() != 2) {
+            throw new IllegalArgumentException("해당 회원은 기업회원(MembershipType 2번)이 아닙니다.");
         }
 
         existing.setCompanyName(dto.getCompanyName());
@@ -145,7 +145,7 @@ public class CompanyInfoServiceImpl implements CompanyInfoService {
                 ? companyInfo.getMember().getMembershipType().getTypeId()
                 : null;
 
-        if (typeId == null || !(typeId == 1 || typeId == 3)) {
+        if (typeId == null || !(typeId == 1 || typeId == 2)) {
             throw new IllegalArgumentException("삭제는 기업회원(2) 또는 관리자(1)만 가능합니다.");
         }
         companyInfoRepository.delete(companyInfo);

@@ -194,6 +194,13 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
+    public List<ApplicationDTO> getAllApplications() {
+        return applicationRepository.findAll().stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<ApplicationDTO> getApplicationsByPost(Integer postId) {
         List<Application> entities = applicationRepository.findByPost_PostId(postId);
 

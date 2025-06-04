@@ -9,25 +9,42 @@
             text-decoration: none;
             color: black;
         }
+
         .header {
             border-bottom: 1px solid #aaa;
             padding: 10px;
         }
-    </style>
-    <style>
+
         table {
             width: 100%;
             border-collapse: collapse;
         }
+
         th, td {
             border: 1px solid #ccc;
             padding: 8px;
         }
+
         th {
             background-color: #f2f2f2;
         }
+
         .top-bar {
             margin-bottom: 15px;
+        }
+
+        .filter-form {
+            margin-bottom: 15px;
+        }
+
+        .filter-form select {
+            padding: 5px;
+            font-size: 14px;
+        }
+
+        .filter-form button {
+            padding: 5px 10px;
+            font-size: 14px;
         }
     </style>
 </head>
@@ -36,11 +53,10 @@
     <h2 style="color:#5f83d6;">
         <a th:href="@{/member/main}" style="text-decoration: none; color: #5f83d6;">CodeFarm</a>
     </h2>
-    <!-- 네비게이션 - 돌아가기 링크들 -->
     <nav>
         <a href="#" onclick="goToPost()">채용 공고</a>
         <a href="#" onclick="goToConpany()">기업 소개</a>
-        <a th:href="@{/board}">자유게시판</a>
+        <a th:href="@{/templates/board}">자유게시판</a>
         <a th:href="@{/inquiry}">1:1문의</a>
         <a href="#" onclick="goToMypage()">마이페이지</a>
     </nav>
@@ -50,37 +66,79 @@
     <h2>📄 모든 채용 공고 목록</h2>
 </div>
 
-<div th:if="${#lists.isEmpty(posts)}">
+<!-- ✅ 직무 카테고리 필터 폼 -->
+<div class="filter-form">
+    <form method="get" th:action="@{/post/all}">
+        <label for="categoryId">직무 카테고리:
+            <select name="categoryId" id="categoryId">
+                <option value="" th:selected="${selectedCategoryId == null}">전체</option>
+                <option th:each="category : ${jobCategories}"
+                        th:value="${category.jobCategoryId}"
+                        th:text="${category.name}"
+                        th:selected="${category.jobCategoryId} == ${selectedCategoryId}">
+                </option>
+            </select>
+        </label>
+        <button type="submit">검색</button>
+    </form>
+</div>
+
+<!-- 공고 목록 -->
+<div th:if="${#lists.isEmpty(result.dtoList)}">
     <p>등록된 공고가 없습니다.</p>
 </div>
 
-<div th:unless="${#lists.isEmpty(posts)}">
+<div th:unless="${#lists.isEmpty(result.dtoList)}">
     <table>
         <thead>
         <tr>
             <th>공고 ID</th>
             <th>제목</th>
+            <th>급여</th>
             <th>주소</th>
             <th>마감일</th>
-            <th>상세보기</th>
+            <th>상세</th>
         </tr>
         </thead>
         <tbody>
-        <tr th:each="post : ${posts}">
+        <tr th:each="post : ${result.dtoList}">
             <td th:text="${post.postId}">1</td>
-            <td>
-                <a th:href="@{'/post/view/' + ${post.postId}}" th:text="${post.title}">제목</a>
-            </td>
+            <td th:text="${post.title}">제목</td>
+            <td th:text="${post.salary}">급여</td>
             <td th:text="${post.address}">주소</td>
             <td th:text="${#temporals.format(post.deadline, 'yyyy-MM-dd')}">마감일</td>
-            <td><a th:href="@{'/post/view/' + ${post.postId}}">상세보기</a></td>
+            <td>
+                <a th:href="@{'/post/view/' + ${post.postId}}" th:text="${post.title}">상세</a>
+            </td>
         </tr>
         </tbody>
     </table>
-
-
 </div>
 
+<!-- 페이징 영역 -->
+<nav th:if="${result.totalPage > 1}">
+    <ul class="pagination justify-content-center">
+        <li class="page-item" th:classappend="${result.prev} ? '' : 'disabled'">
+            <a class="page-link"
+               th:href="@{|/post/all?page=${result.start - 1}&categoryId=${selectedCategoryId}|}">«</a>
+        </li>
+
+        <li class="page-item"
+            th:each="i : ${#numbers.sequence(result.start, result.end)}"
+            th:classappend="${i == result.page} ? 'active'">
+            <a class="page-link"
+               th:href="@{|/post/all?page=${i}&categoryId=${selectedCategoryId}|}"
+               th:text="${i}">1</a>
+        </li>
+
+        <li class="page-item" th:classappend="${result.next} ? '' : 'disabled'">
+            <a class="page-link"
+               th:href="@{|/post/all?page=${result.end + 1}&categoryId=${selectedCategoryId}|}">»</a>
+        </li>
+    </ul>
+</nav>
+
+<!-- 스크립트 -->
 <script th:inline="javascript">
     function goToMypage() {
         const isLoggedIn = /*[[${session.loginMember != null}]]*/ false;
@@ -91,8 +149,7 @@
             window.location.href = '/member/login';
         }
     }
-</script>
-<script th:inline="javascript">
+
     function goToPost() {
         const isLoggedIn = /*[[${session.loginMember != null}]]*/ false;
         if (isLoggedIn) {
@@ -102,8 +159,7 @@
             window.location.href = '/member/login';
         }
     }
-</script>
-<script th:inline="javascript">
+
     function goToConpany() {
         const isLoggedIn = /*[[${session.loginMember != null}]]*/ false;
         if (isLoggedIn) {
@@ -114,6 +170,5 @@
         }
     }
 </script>
-
 </body>
 </html>

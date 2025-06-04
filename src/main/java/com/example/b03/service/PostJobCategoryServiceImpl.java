@@ -4,11 +4,13 @@ import com.example.b03.domain.JobCategory;
 import com.example.b03.domain.Post;
 import com.example.b03.domain.PostJobCategory;
 import com.example.b03.domain.PostJobCategoryId;
+import com.example.b03.dto.PostJobCategoryDTO;
 import com.example.b03.repository.JobCategoryRepository;
 import com.example.b03.repository.PostJobCategoryRepository;
 import com.example.b03.repository.PostRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,6 +23,7 @@ public class PostJobCategoryServiceImpl implements PostJobCategoryService {
     private final PostJobCategoryRepository postJobCategoryRepository;
     private final PostRepository postRepository;
     private final JobCategoryRepository jobCategoryRepository;
+    private final ModelMapper modelMapper;
 
     // 단일 카테고리 추가
     @Override
@@ -83,6 +86,12 @@ public class PostJobCategoryServiceImpl implements PostJobCategoryService {
     @Override
     public void removeAllJobCategoriesFromPost(Integer postId) {
         postJobCategoryRepository.deleteByPost_PostId(postId);
+    }
+
+    public List<PostJobCategoryDTO> getJobCategoryDTOsByPostId(Integer postId) {
+        return postJobCategoryRepository.findByPost_PostId(postId).stream()
+                .map(mapping -> modelMapper.map(mapping, PostJobCategoryDTO.class))
+                .collect(Collectors.toList());
     }
 
     // 복합키로 단일 삭제

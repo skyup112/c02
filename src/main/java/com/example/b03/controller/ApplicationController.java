@@ -35,7 +35,7 @@ public class ApplicationController {
                                                    HttpSession session) {
         MemberDTO loginMember = (MemberDTO) session.getAttribute("loginMember");
 
-        if (loginMember == null || loginMember.getMembershipTypeId() != 3) {
+        if (loginMember == null || loginMember.getMembershipTypeId() != 2) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -88,7 +88,7 @@ public class ApplicationController {
                               RedirectAttributes redirectAttributes) {
 
         MemberDTO loginMember = (MemberDTO) session.getAttribute("loginMember");
-        if (loginMember == null || loginMember.getMembershipTypeId() != 2) {
+        if (loginMember == null || loginMember.getMembershipTypeId() != 3) {
             redirectAttributes.addFlashAttribute("error", "접근 권한이 없습니다.");
             return "redirect:/member/login";
         }

@@ -2,6 +2,7 @@ package com.example.b03.service;
 
 import com.example.b03.domain.PostJobCategory;
 import com.example.b03.domain.PostJobCategoryId;
+import com.example.b03.dto.PostJobCategoryDTO;
 
 import java.util.List;
 
@@ -26,4 +27,6 @@ public interface PostJobCategoryService {
     void deleteById(PostJobCategoryId id);
 
     void assignJobCategoriesToPost(Integer postId, List<Integer> jobCategoryIds); // ✅ 이 메서드 반드시 있어야 함
+
+    List<PostJobCategoryDTO> getJobCategoryDTOsByPostId(Integer postId);
 }

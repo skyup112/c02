@@ -23,4 +23,5 @@ public interface ApplicationService {
     List<ApplicationDTO> getApplicationsByPost(Integer postId); // ✅ 이 줄 추가됨
     boolean isDuplicateApplication(Integer postId, Integer memberNo);
     List<Map<String, Object>> getApplicationsWithMemberInfoByPostAndCompany(Integer postId, Integer companyMemberNo);
+    List<ApplicationDTO> getAllApplications();
 }

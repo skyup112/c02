@@ -3,10 +3,14 @@ package com.example.b03.service;
 import com.example.b03.domain.Member;
 import com.example.b03.domain.MembershipType;
 import com.example.b03.dto.MemberDTO;
+import com.example.b03.dto.PageRequestDTO;
+import com.example.b03.dto.PageResponseDTO;
 import com.example.b03.repository.MemberRepository;
 import com.example.b03.repository.MembershipTypeRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -145,6 +149,22 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
+    public PageResponseDTO<MemberDTO> getPagedMembers(PageRequestDTO requestDTO) {
+        Pageable pageable = requestDTO.getPageable("memberNo");
+        Page<Member> result = memberRepository.findAll(pageable);
+        List<MemberDTO> dtoList = result.getContent().stream()
+                .map(member -> modelMapper.map(member, MemberDTO.class))
+                .toList();
+
+        return PageResponseDTO.<MemberDTO>builder()
+                .page(requestDTO.getPage())
+                .size(requestDTO.getSize())
+                .total((int) result.getTotalElements())
+                .dtoList(dtoList)
+                .build();
+    }
+
+    @Override
     public MemberDTO getMemberByLoginId(String loginId) {
         return memberRepository.findByLoginId(loginId)
                 .map(member -> {
@@ -170,4 +190,5 @@ public class MemberServiceImpl implements MemberService {
 
         return true;
     }
+
 }

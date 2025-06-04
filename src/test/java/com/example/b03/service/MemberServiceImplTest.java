@@ -51,7 +51,7 @@ public class MemberServiceImplTest {
                 .birthDate(LocalDate.of(1995, 5, 5))
                 .address("서울시 성북구")
                 .phone("01022223333")
-                .membershipTypeId((byte) 2) // 개인회원
+                .membershipTypeId((byte) 3) // 개인회원
                 .build();
 
         MemberDTO saved = memberService.createMember(dto);
@@ -68,7 +68,7 @@ public class MemberServiceImplTest {
                 .birthDate(LocalDate.of(1988, 3, 15))
                 .address("서울시 강남구")
                 .phone("01033334444")
-                .membershipTypeId((byte) 3) // 기업회원
+                .membershipTypeId((byte) 2) // 기업회원
                 .build();
 
         MemberDTO saved = memberService.createMember(dto);

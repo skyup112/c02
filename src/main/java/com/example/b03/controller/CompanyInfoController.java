@@ -94,6 +94,34 @@ public class CompanyInfoController {
                 + "&size=" + pageRequestDTO.getSize();
     }
 
+    @GetMapping("/register")
+    public String registerForm(@RequestParam("memberNo") Integer memberNo, Model model) {
+        List<JobCategoryDTO> jobCategories = jobCategoryService.getAll();
+        model.addAttribute("jobCategories", jobCategories);
+        model.addAttribute("memberNo", memberNo); // 💡 form hidden input에서 사용됨
+        return "company/register";
+    }
+    @PostMapping("/register")
+    public String registerSubmit(@RequestParam("memberNo") Integer memberNo,
+                                 CompanyInfoDTO dto,
+                                 @RequestParam(value = "jobCategoryIds", required = false) List<Integer> jobCategoryIds) {
+        log.info("Company Register Submit: {}", dto);
+
+        // memberNo가 DTO에 없을 경우 set (중요!)
+        dto.setMemberNo(memberNo);
+
+        // 회사 정보 등록
+        CompanyInfoDTO savedDTO = companyInfoService.register(dto);
+
+        // 직무 카테고리 등록
+        if (jobCategoryIds != null && !jobCategoryIds.isEmpty()) {
+            companyJobCategoryService.registerCategories(savedDTO.getMemberNo(), jobCategoryIds);
+        }
+
+        return "redirect:/member/mypage";
+    }
+
+
 }
 
 

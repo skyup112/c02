@@ -1,9 +1,6 @@
 package com.example.b03.controller;
 
-import com.example.b03.dto.ApplicationDTO;
-import com.example.b03.dto.CompanyInfoDTO;
-import com.example.b03.dto.MemberDTO;
-import com.example.b03.dto.PostDTO;
+import com.example.b03.dto.*;
 import com.example.b03.service.ApplicationService;
 import com.example.b03.service.CompanyInfoService;
 import com.example.b03.service.MemberService;
@@ -31,37 +28,41 @@ public class LoginAndMypageController {
     private final PostService postService;
     private final CompanyInfoService companyInfoService;
 
+    // 로그인 페이지
     @GetMapping("/login")
     public String loginPage(@ModelAttribute("message") String message, Model model) {
         if (!message.isEmpty()) model.addAttribute("message", message);
-        return "project/login";
+        return "main/login";
     }
 
+    // 회원가입 유형 선택
     @GetMapping("/join")
     public String selectJoinType() {
-        return "project/join";
+        return "main/join";
     }
 
+    // 회원가입 페이지
     @GetMapping("/register")
     public String registerPage(@RequestParam("type") int type, Model model) {
-        String memberTypeName = (type == 2) ? "개인" : "기업";
+        String memberTypeName = (type == 3) ? "개인" : "기업";
         model.addAttribute("membershipTypeId", (byte) type);
         model.addAttribute("memberTypeName", memberTypeName);
-        return "project/register";
+        return "main/register";
     }
 
+    // 회원가입 처리
     @PostMapping("/register")
     public String submitRegister(MemberDTO dto, RedirectAttributes redirectAttributes) {
         if (!memberService.isValidPassword(dto.getPassword())) {
             redirectAttributes.addFlashAttribute("message", "비밀번호는 8자 이상, 영문+숫자+특수문자 포함, 같은 문자 반복 불가입니다.");
             return "redirect:/member/register?type=" + dto.getMembershipTypeId();
         }
-
         memberService.createMember(dto);
         redirectAttributes.addFlashAttribute("message", "회원가입이 완료되었습니다.");
         return "redirect:/member/login";
     }
 
+    // 로그인 처리
     @PostMapping("/login")
     public String processLogin(@RequestParam String loginId,
                                @RequestParam String password,
@@ -72,64 +73,75 @@ public class LoginAndMypageController {
             return "redirect:/member/login";
         }
 
-        MemberDTO member;
         try {
-            member = memberService.getMemberByLoginId(loginId);
+            MemberDTO member = memberService.getMemberByLoginId(loginId);
+            if (!password.equals(member.getPassword()) || Boolean.TRUE.equals(member.getIsDeleted())) {
+                redirectAttributes.addFlashAttribute("error", "아이디 또는 비밀번호가 일치하지 않거나 탈퇴한 계정입니다.");
+                return "redirect:/member/login";
+            }
+            session.setAttribute("loginMember", member);
+            return "redirect:/member/main";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "아이디 또는 비밀번호가 일치하지 않습니다.");
             return "redirect:/member/login";
         }
-
-        if (!password.equals(member.getPassword())) {
-            redirectAttributes.addFlashAttribute("error", "아이디 또는 비밀번호가 일치하지 않습니다.");
-            return "redirect:/member/login";
-        }
-
-        if (Boolean.TRUE.equals(member.getIsDeleted())) {
-            redirectAttributes.addFlashAttribute("error", "이미 탈퇴한 계정입니다.");
-            return "redirect:/member/login";
-        }
-
-        session.setAttribute("loginMember", member);
-        return "redirect:/member/main";
     }
 
+    // 마이페이지
     @GetMapping("/mypage")
-    public String mypage(HttpSession session, Model model) {
+    public String mypage(@RequestParam(defaultValue = "1") int memberPage,
+                         @RequestParam(defaultValue = "1") int postPage,
+                         @RequestParam(defaultValue = "members") String section,  // 추가
+                         Model model,
+                         HttpSession session) {
         MemberDTO loginMember = (MemberDTO) session.getAttribute("loginMember");
         if (loginMember == null) {
             model.addAttribute("error", "로그인 후 이용 가능합니다.");
-            return "project/mypage/mypage-guest";
+            return "mypage/mypage-guest";
         }
 
         model.addAttribute("member", loginMember);
+        model.addAttribute("section", section); // 선택적으로 뷰에 넘겨도 됨
 
         Byte typeId = loginMember.getMembershipTypeId();
         if (typeId == null) {
             model.addAttribute("error", "회원 유형 정보가 없습니다.");
-            return "project/mypage/mypage-guest";
+            return "mypage/mypage-guest";
         }
 
         if (typeId == 1) {
-            // 관리자
-            return "project/mypage/mypage-admin";
-        }
+            PageRequestDTO memberPageRequest = PageRequestDTO.builder().page(memberPage).size(10).build();
+            PageRequestDTO postPageRequest = PageRequestDTO.builder().page(postPage).size(10).build();
 
-        if (typeId == 2) {
-            // 개인 회원
-            List<ApplicationDTO> applications = applicationService.getApplicationsByMember(loginMember.getMemberNo());
-            model.addAttribute("applications", applications);
-            return "project/mypage/mypage-user";
+            PageResponseDTO<MemberDTO> memberResult = memberService.getPagedMembers(memberPageRequest);
+            PageResponseDTO<PostDTO> postResult = postService.getPagedPosts(postPageRequest);
+
+            AdminStatsDTO stats = AdminStatsDTO.builder()
+                    .totalMembers(memberResult.getTotal())
+                    .totalPosts(postResult.getTotal())
+                    .totalApplications(applicationService.getAllApplications().size())
+                    .build();
+
+            model.addAttribute("memberResult", memberResult);
+            model.addAttribute("postResult", postResult);
+            model.addAttribute("stats", stats);
+            return "mypage/mypage-admin";
         }
 
         if (typeId == 3) {
-            // 기업 회원
+            List<ApplicationDTO> applications = applicationService.getApplicationsByMember(loginMember.getMemberNo());
+            model.addAttribute("applications", applications);
+            return "mypage/mypage-user";
+        }
+
+        if (typeId == 2) {
             try {
                 CompanyInfoDTO companyInfo = companyInfoService.getByMemberNo(loginMember.getMemberNo());
                 model.addAttribute("companyInfo", companyInfo);
             } catch (NoSuchElementException e) {
-                // 🔴 회사 정보가 없는 경우 등록 페이지로 이동
-                return "redirect:/member/company/edit";
+                CompanyInfoDTO emptyInfo = new CompanyInfoDTO();
+                emptyInfo.setMemberNo(loginMember.getMemberNo());
+                model.addAttribute("companyInfo", emptyInfo);
             }
 
             List<PostDTO> posts = postService.getPostsByCompany(loginMember.getMemberNo());
@@ -143,71 +155,84 @@ public class LoginAndMypageController {
                 map.put("postTitle", app.getPostTitle());
                 map.put("filePath", app.getFilePath());
                 map.put("submittedAt", app.getSubmittedAt());
-                MemberDTO member = memberService.getByMemberNo(app.getMemberNo()).orElse(null);
-                if (member != null) {
-                    map.put("applicantName", member.getName());
-                    map.put("applicantPhone", member.getPhone());
+
+                MemberDTO applicant = memberService.getByMemberNo(app.getMemberNo()).orElse(null);
+                if (applicant != null) {
+                    map.put("applicantName", applicant.getName());
+                    map.put("applicantPhone", applicant.getPhone());
                 }
                 return map;
-            }).toList();
-            model.addAttribute("applicants", applicantInfos);
+            }).collect(Collectors.toList());
 
-            return "project/mypage/mypage-company";
+            model.addAttribute("applicants", applicantInfos);
+            return "mypage/mypage-company";
         }
 
-
-        return "project/mypage/mypage-guest"; // fallback
+        return "mypage/mypage-guest";
     }
 
+    // 관리자: 회원 탈퇴
+    @PostMapping("/admin/member/delete/{memberNo}")
+    public String deactivateMember(@PathVariable Integer memberNo) {
+        memberService.deactivateMember(memberNo);
+        return "redirect:/member/mypage";
+    }
+
+    // 관리자: 공고 삭제
+    @PostMapping("/admin/post/delete/{postId}")
+    public String deletePost(@PathVariable Integer postId) {
+        postService.deletePost(postId);
+        return "redirect:/member/mypage";
+    }
+
+    // 기업회원: 지원자 조회
     @GetMapping("/applicants/{postId}")
     public String viewApplicantsForPost(@PathVariable Integer postId,
                                         HttpSession session,
                                         Model model,
                                         RedirectAttributes redirectAttributes) {
         MemberDTO loginMember = (MemberDTO) session.getAttribute("loginMember");
-
-        if (loginMember == null || loginMember.getMembershipTypeId() != 3) {
+        if (loginMember == null || loginMember.getMembershipTypeId() != 2) {
             redirectAttributes.addFlashAttribute("error", "접근 권한이 없습니다.");
             return "redirect:/member/login";
         }
 
         PostDTO post = postService.getPostById(postId);
-        if (post == null || !post.getMemberNo().equals(loginMember.getMemberNo())) {
+        if (post == null || !post.getCompanyMemberNo().equals(loginMember.getMemberNo())) {
             redirectAttributes.addFlashAttribute("error", "해당 공고에 접근할 수 없습니다.");
             return "redirect:/member/mypage";
         }
 
-        List<Map<String, Object>> applicantInfos = applicationService
-                .getApplicationsWithMemberInfoByPostAndCompany(postId, loginMember.getMemberNo());
-
+        List<Map<String, Object>> applicants = applicationService.getApplicationsWithMemberInfoByPostAndCompany(postId, loginMember.getMemberNo());
         model.addAttribute("post", post);
-        model.addAttribute("applicants", applicantInfos);
-        return "project/mypage/applicants-for-post";
+        model.addAttribute("applicants", applicants);
+        return "mypage/applicants-for-post";
     }
 
+    // 로그아웃
     @GetMapping("/logout")
     public String logout(HttpSession session) {
         session.invalidate();
         return "redirect:/member/main";
     }
 
+    // 메인 페이지
     @GetMapping("/main")
     public String mainPage(HttpSession session, Model model) {
         MemberDTO loginMember = (MemberDTO) session.getAttribute("loginMember");
         if (loginMember != null) {
             model.addAttribute("name", loginMember.getName());
         }
-        return "project/main";
+        return "main/main";
     }
 
+    // 회원정보 수정
     @GetMapping("/edit")
     public String showEditForm(HttpSession session, Model model) {
         MemberDTO loginMember = (MemberDTO) session.getAttribute("loginMember");
-        if (loginMember == null) {
-            return "redirect:/member/login";
-        }
+        if (loginMember == null) return "redirect:/member/login";
         model.addAttribute("member", loginMember);
-        return "project/mypage/edit-user";
+        return "mypage/edit-user";
     }
 
     @PostMapping("/edit")
@@ -216,12 +241,7 @@ public class LoginAndMypageController {
                                    HttpSession session,
                                    RedirectAttributes redirectAttributes) {
         MemberDTO loginMember = (MemberDTO) session.getAttribute("loginMember");
-        if (loginMember == null) {
-            redirectAttributes.addFlashAttribute("error", "로그인이 필요합니다.");
-            return "redirect:/member/login";
-        }
-
-        if (!loginMember.getPassword().equals(confirmPassword)) {
+        if (loginMember == null || !loginMember.getPassword().equals(confirmPassword)) {
             redirectAttributes.addFlashAttribute("error", "비밀번호가 일치하지 않습니다.");
             return "redirect:/member/edit";
         }
@@ -233,31 +253,30 @@ public class LoginAndMypageController {
 
         memberService.update(dto);
         session.setAttribute("loginMember", memberService.getMemberByLoginId(loginMember.getLoginId()));
-
         redirectAttributes.addFlashAttribute("message", "회원 정보가 수정되었습니다.");
         return "redirect:/member/mypage";
     }
 
+    // 회원 탈퇴
     @PostMapping("/delete")
     public String deleteMember(@RequestParam String confirmPassword,
                                HttpSession session,
                                RedirectAttributes redirectAttributes) {
         MemberDTO loginMember = (MemberDTO) session.getAttribute("loginMember");
-
         if (loginMember == null || !loginMember.getPassword().equals(confirmPassword)) {
             redirectAttributes.addFlashAttribute("error", "비밀번호가 일치하지 않거나 로그인되지 않았습니다.");
             return "redirect:/member/mypage";
         }
-
         memberService.deactivateMember(loginMember.getMemberNo());
         session.invalidate();
         redirectAttributes.addFlashAttribute("message", "회원 탈퇴가 완료되었습니다.");
         return "redirect:/member/login";
     }
 
+    // 비밀번호 변경
     @GetMapping("/password-change")
     public String passwordChangeForm() {
-        return "project/mypage/password-change";
+        return "mypage/password-change";
     }
 
     @PostMapping("/password-change")
@@ -266,7 +285,6 @@ public class LoginAndMypageController {
                                  @RequestParam String confirmPassword,
                                  HttpSession session,
                                  RedirectAttributes redirectAttributes) {
-
         MemberDTO loginMember = (MemberDTO) session.getAttribute("loginMember");
 
         if (loginMember == null) {

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Company Info Detail</title>
+</head>
+<body>
+<h2>회사 상세 정보</h2>
+
+<table border="1">
+    <tr>
+        <th>회사 이름</th>
+        <td th:text="${dto.companyName}">회사명</td>
+    </tr>
+    <tr>
+        <th>설립일</th>
+        <td th:text="${dto.foundedDate}">2025-01-01</td>
+    </tr>
+    <tr>
+        <th>직원 수</th>
+        <td th:text="${dto.employeeCount}">100</td>
+    </tr>
+    <tr>
+        <th>매출</th>
+        <td th:text="${dto.revenue}">10000000</td>
+    </tr>
+    <tr>
+        <th>기술 스택</th>
+        <td th:text="${dto.techStack}">Java, Spring</td>
+    </tr>
+    <tr>
+        <th>홈페이지</th>
+        <td><a th:href="@{${dto.homepageUrl}}" th:text="${dto.homepageUrl}" target="_blank">홈페이지</a></td>
+    </tr>
+    <tr>
+        <th>전화번호</th>
+        <td th:text="${dto.phone}">010-1234-5678</td>
+    </tr>
+    <tr>
+        <th>주소</th>
+        <td th:text="${dto.address}">서울특별시</td>
+    </tr>
+    <tr>
+        <th>설명</th>
+        <td th:text="${dto.description}">설명입니다.</td>
+    </tr>
+    <tr>
+        <th>직무 카테고리</th>
+        <td>
+            <ul>
+                <li th:each="categoryName : ${dto.jobCategoryNames}" th:text="${categoryName}">직무 카테고리</li>
+            </ul>
+        </td>
+    </tr>
+</table>
+
+<br>
+<div th:if="${session.loginMember != null and session.loginMember.membershipTypeId == 3}">
+    <a th:href="@{/company/modify(memberNo=${dto.memberNo}, page=${pageRequestDTO.page}, size=${pageRequestDTO.size})}">수정하기</a>
+</div>
+<a th:href="@{/company/list(page=${pageRequestDTO.page}, size=${pageRequestDTO.size})}">목록으로</a>
+</body>
+</html>
+
+
+

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>관리자 마이페이지</title>
+    <style>
+        .container { display: flex; }
+        .menu { width: 200px; background-color: #eee; padding: 10px; }
+        .content { flex: 1; padding: 20px; }
+        .menu a { display: block; margin-bottom: 10px; cursor: pointer; color: blue; text-decoration: underline; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+        th { background-color: #f9f9f9; }
+        .pagination a.active { font-weight: bold; color: red; }
+    </style>
+</head>
+<body>
+
+<div style="background-color: #f2f2f2; padding: 10px;">
+    <a th:href="@{/member/main}">🏠 메인으로</a>
+</div>
+
+<div class="container">
+    <div class="menu">
+        <h4>🛠 관리자 메뉴</h4>
+        <a th:href="@{/member/mypage(section='members')}">회원 관리</a>
+        <a th:href="@{/member/mypage(section='posts')}">공고 전체 관리</a>
+        <a th:href="@{/member/mypage(section='stats')}">통계 보기</a>
+    </div>
+
+    <div class="content">
+        <!-- 회원 관리 -->
+        <div id="members">
+            <h3>👤 전체 회원 목록</h3>
+            <table>
+                <thead>
+                <tr>
+                    <th>회원번호</th>
+                    <th>이름</th>
+                    <th>회원유형</th>
+                    <th>전화번호</th>
+                    <th>상태</th>
+                    <th>관리</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="member : ${memberResult.dtoList}">
+                    <td th:text="${member.memberNo}">1</td>
+                    <td th:text="${member.name}">홍길동</td>
+                    <td th:text="${member.membershipTypeName}">개인회원</td>
+                    <td th:text="${member.phone}">010-0000-0000</td>
+                    <td th:text="${member.isDeleted} ? '탈퇴' : '활성'">활성</td>
+                    <td>
+                        <form th:action="@{|/member/admin/member/delete/${member.memberNo}|}" method="post"
+                              th:if="${!member.isDeleted}">
+                            <button type="submit">탈퇴 처리</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="pagination">
+                <a th:if="${memberResult.prev}" th:href="@{/member/mypage(memberPage=${memberResult.page - 1}, postPage=${postResult.page})}">«</a>
+                <a th:each="i : ${#numbers.sequence(1, memberResult.totalPage)}"
+                   th:href="@{/member/mypage(memberPage=${i}, postPage=${postResult.page})}"
+                   th:text="${i}" th:classappend="${i == memberResult.page} ? 'active' : ''"></a>
+                <a th:if="${memberResult.next}" th:href="@{/member/mypage(memberPage=${memberResult.page + 1}, postPage=${postResult.page})}">»</a>
+            </div>
+        </div>
+
+        <!-- 공고 관리 -->
+        <div id="posts" style="display: none;">
+            <h3>📄 전체 공고 목록</h3>
+            <table>
+                <thead>
+                <tr>
+                    <th>공고 ID</th>
+                    <th>제목</th>
+                    <th>기업명</th>
+                    <th>마감일</th>
+                    <th>관리</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="post : ${postResult.dtoList}">
+                    <td th:text="${post.postId}">1</td>
+                    <td>
+                        <a th:href="@{'/post/view/' + ${post.postId}}" th:text="${post.title}">제목</a>
+                    </td>
+                    <td th:text="${post.companyName != null ? post.companyName : '기업명 없음'}">회사명</td>
+                    <td th:text="${#temporals.format(post.deadline, 'yyyy-MM-dd')}">2025-12-31</td>
+                    <td>
+                        <form th:action="@{|/member/admin/post/delete/${post.postId}|}" method="post">
+                            <button type="submit">삭제</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="pagination">
+                <a th:if="${postResult.prev}" th:href="@{/member/mypage(memberPage=${memberResult.page}, postPage=${postResult.page - 1})}">«</a>
+                <a th:each="i : ${#numbers.sequence(1, postResult.totalPage)}"
+                <a th:href="@{/member/mypage(memberPage=${memberResult.page}, postPage=${i}, section='posts')}"
+                   th:text="${i}" th:class="${i == postResult.page} ? 'active' : ''"></a>
+                <a th:if="${postResult.next}" th:href="@{/member/mypage(memberPage=${memberResult.page}, postPage=${postResult.page + 1})}">»</a>
+            </div>
+        </div>
+
+        <!-- 통계 -->
+        <div id="stats" style="display: none;">
+            <h3>📊 통계</h3>
+            <ul>
+                <li>전체 회원 수: <span th:text="${stats.totalMembers}">0</span></li>
+                <li>전체 공고 수: <span th:text="${stats.totalPosts}">0</span></li>
+                <li>전체 지원 수: <span th:text="${stats.totalApplications}">0</span></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showSection(id) {
+        document.querySelectorAll('.content > div').forEach(div => div.style.display = 'none');
+        document.getElementById(id).style.display = 'block';
+    }
+
+    // ✅ URL에서 section 파라미터 읽기
+    window.onload = function () {
+        const params = new URLSearchParams(window.location.search);
+        const section = params.get("section") || "members"; // 기본값: members
+        showSection(section);
+    }
+</script>
+
+</body>
+</html>

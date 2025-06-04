@@ -5,10 +5,27 @@
     <meta charset="UTF-8">
     <title>기업회원 마이페이지</title>
     <style>
-        .container { display: flex; }
-        .menu { width: 200px; background-color: #eee; padding: 10px; height: 100vh; }
-        .content { flex: 1; padding: 20px; }
-        .menu a { display: block; margin-bottom: 10px; text-decoration: none; }
+        .container {
+            display: flex;
+        }
+
+        .menu {
+            width: 200px;
+            background-color: #eee;
+            padding: 10px;
+            height: 100vh;
+        }
+
+        .content {
+            flex: 1;
+            padding: 20px;
+        }
+
+        .menu a {
+            display: block;
+            margin-bottom: 10px;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
@@ -33,8 +50,9 @@
             <p>주소: <span th:text="${member.address}"></span></p>
         </div>
 
-        <div id="companyinfo" style="display: block;">
+        <div id="companyinfo" style="display: none;">
             <h3>📌 기업 정보</h3>
+
             <p>기업명: <span th:text="${companyInfo.companyName}">-</span></p>
             <p>설립일자: <span th:text="${companyInfo.foundedDate}">-</span></p>
             <p>직원 수: <span th:text="${companyInfo.employeeCount}">-</span></p>
@@ -47,10 +65,19 @@
             <p>주소: <span th:text="${companyInfo.address}">-</span></p>
             <p>기업 소개: <span th:text="${companyInfo.description}">-</span></p>
 
-            <!-- 🔽 수정 버튼 추가 -->
-            <button th:attr="onclick=|location.href='/company/modify?memberNo=${member.memberNo}'|">
-                기업 정보 수정
-            </button>
+            <!-- 🔽 수정 버튼 (companyInfo가 있을 때만 보이게) -->
+            <div th:if="${companyInfo.companyName != null}">
+                <button th:attr="onclick=|location.href='/company/modify?memberNo=${member.memberNo}'|">
+                    기업 정보 수정
+                </button>
+            </div>
+
+            <!-- 🔽 기업 정보가 없을 때 "등록" 버튼 노출 -->
+            <div th:unless="${companyInfo.companyName != null}">
+                <button th:attr="onclick=|location.href='/company/register?memberNo=${member.memberNo}'|">
+                    기업 정보 등록
+                </button>
+            </div>
 
         </div>
 

@@ -28,17 +28,23 @@
         <input type="date" name="deadline" th:value="${#temporals.format(post.deadline, 'yyyy-MM-dd')}" required />
     </label><br/>
 
-    <label>직무 카테고리:
-        <select name="jobCategoryIds" multiple required>
-            <option th:each="cat : ${jobCategories}"
-                    th:value="${cat.jobCategoryId}"
-                    th:text="${cat.name}"
-                    th:selected="${#lists.contains(selectedCategoryIds, cat.jobCategoryId)}"></option>
-        </select>
-    </label><br/><br/>
+    <div class="mb-3">
+        <label class="form-label">직무 카테고리</label><br>
+        <div th:each="category : ${jobCategories}" class="form-check form-check-inline">
+            <input class="form-check-input" type="checkbox" name="jobCategoryIds"
+                   th:id="'cat_' + ${category.jobCategoryId}"
+                   th:value="${category.jobCategoryId}">
+            <label class="form-check-label" th:for="'cat_' + ${category.jobCategoryId}" th:text="${category.name}">카테고리</label>
+        </div>
+    </div>
 
     <button type="submit">수정하기</button>
-    <button type="button" onclick="location.href='/member/mypage'">취소</button>
+    <a th:href="@{/member/mypage}" class="btn btn-secondary">취소</a>
+
+    <div th:if="${error}" class="alert alert-danger" role="alert" style="margin-bottom: 20px;">
+        <p th:text="${error}"></p>
+    </div>
+
 </form>
 
 </body>

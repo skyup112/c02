@@ -1,6 +1,8 @@
 package com.example.b03.service;
 
 import com.example.b03.dto.MemberDTO;
+import com.example.b03.dto.PageRequestDTO;
+import com.example.b03.dto.PageResponseDTO;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,4 +25,5 @@ public interface MemberService {
     void changePassword(Integer memberNo, String newPassword);
     void deactivateMember(Integer memberNo);
     boolean isValidPassword(String password);
+    PageResponseDTO<MemberDTO> getPagedMembers(PageRequestDTO requestDTO);
 }
