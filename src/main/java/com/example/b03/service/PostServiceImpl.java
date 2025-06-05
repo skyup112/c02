@@ -3,11 +3,13 @@ package com.example.b03.service;
 import com.example.b03.domain.CompanyInfo;
 import com.example.b03.domain.Member;
 import com.example.b03.domain.Post;
+import com.example.b03.domain.PostJobCategory;
 import com.example.b03.dto.PageRequestDTO;
 import com.example.b03.dto.PageResponseDTO;
 import com.example.b03.dto.PostDTO;
 import com.example.b03.repository.CompanyInfoRepository;
 import com.example.b03.repository.MemberRepository;
+import com.example.b03.repository.PostJobCategoryRepository;
 import com.example.b03.repository.PostRepository;
 import com.example.b03.service.PostService;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,8 @@ public class PostServiceImpl implements PostService {
     private final PostRepository postRepository;
     private final CompanyInfoRepository companyInfoRepository;
     private final MemberRepository memberRepository;
+    private final PostJobCategoryRepository postJobCategoryRepository;
+
 
     @Override
     @Transactional
@@ -49,7 +53,7 @@ public class PostServiceImpl implements PostService {
                 .title(dto.getTitle())
                 .description(dto.getDescription())
                 .salary(dto.getSalary())
-                .address(dto.getAddress())
+                .location(dto.getLocation())
                 .deadline(dto.getDeadline())
                 .postedDate(LocalDateTime.now())
                 .updatedDate(LocalDateTime.now())
@@ -61,22 +65,29 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public PostDTO updatePost(PostDTO dto) {
+    public void updatePost(PostDTO dto) {
         Post post = postRepository.findById(dto.getPostId())
                 .orElseThrow(() -> new IllegalArgumentException("공고가 존재하지 않습니다."));
 
+        if (dto.getPostId() == null) {
+            throw new IllegalArgumentException("postId가 누락되었습니다.");
+        }
+
+        post.setPostId(dto.getPostId());
         post.setTitle(dto.getTitle());
         post.setDescription(dto.getDescription());
         post.setSalary(dto.getSalary());
-        post.setAddress(dto.getAddress());
+        post.setLocation(dto.getLocation());
         post.setUpdatedDate(LocalDateTime.now());
         post.setDeadline(dto.getDeadline());
 
-        return toDTO(postRepository.save(post));
     }
 
     @Override
     public void deletePost(Integer postId) {
+
+        postJobCategoryRepository.deleteByPostId(postId);
+
         postRepository.deleteById(postId);
     }
 
@@ -138,18 +149,29 @@ public class PostServiceImpl implements PostService {
                 .build();
     }
 
+    public List<PostDTO> getAllActivePosts() {
+        List<Post> posts = postRepository.findByCompanyInfo_Member_IsDeletedFalse();
+        return posts.stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
     // Post -> PostDTO 변환
     private PostDTO toDTO(Post post) {
         return PostDTO.builder()
                 .postId(post.getPostId())
+                .memberNo(post.getCompany().getMember().getMemberNo())        // 회사 회원 번호
+                .companyMemberNo(post.getCompany().getMemberNo())            // company 테이블의 member_no
+                .companyName(post.getCompany().getCompanyName())            // 회사명
+                .companyPhone(post.getCompany().getMember().getPhone())     // 회사 전화번호
                 .title(post.getTitle())
                 .description(post.getDescription())
                 .salary(post.getSalary())
-                .address(post.getAddress())
-                .deadline(post.getDeadline())
+                .location(post.getLocation())
                 .postedDate(post.getPostedDate())
                 .updatedDate(post.getUpdatedDate())
-                .companyMemberNo(post.getCompany().getMemberNo()) // 회사 회원 번호 추가
+                .deadline(post.getDeadline())
+                .createdAt(post.getCreatedAt())
+                .updatedAtEntity(post.getUpdatedAt())
+                .isDeleted(post.getIsDeleted())
                 .build();
     }
 }

@@ -77,7 +77,7 @@ public class ApplicationController {
 
         model.addAttribute("postId", postId);
         model.addAttribute("memberNo", memberNo);
-        return "/project/application/application_form";
+        return "application/application_form";
     }
 
     // 지원서 제출

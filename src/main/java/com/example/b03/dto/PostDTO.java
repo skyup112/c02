@@ -19,7 +19,9 @@ public class PostDTO {
 
     private Integer companyMemberNo;
     private String companyName;
-    private String address;
+    private String location;
+
+
     private String companyPhone;
 
     private LocalDateTime postedDate;
@@ -33,4 +35,7 @@ public class PostDTO {
     private Boolean isDeleted;
 
     private List<String> jobCategoryNames;
+
+
 }
+

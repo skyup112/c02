@@ -29,18 +29,18 @@ public class CompanyInfoDTO {
 
     private List<String> jobCategoryNames;
 
-    public static CompanyInfoDTO fromEntity(CompanyInfo companyInfo) {
+    public static CompanyInfoDTO fromEntity(CompanyInfo entity) {
         return CompanyInfoDTO.builder()
-                .memberNo(companyInfo.getMember().getMemberNo())
-                .companyName(companyInfo.getCompanyName())
-                .foundedDate(companyInfo.getFoundedDate())
-                .employeeCount(companyInfo.getEmployeeCount())
-                .revenue(companyInfo.getRevenue())
-                .techStack(companyInfo.getTechStack())
-                .homepageUrl(companyInfo.getHomepageUrl())
-                .description(companyInfo.getDescription())
-                .address(companyInfo.getMember().getAddress())  // 주소 매핑
-                .phone(companyInfo.getMember().getPhone())      // 전화번호 매핑
+                .memberNo(entity.getMember().getMemberNo())
+                .companyName(entity.getCompanyName())
+                .foundedDate(entity.getFoundedDate())
+                .employeeCount(entity.getEmployeeCount())
+                .revenue(entity.getRevenue())
+                .techStack(entity.getTechStack())
+                .homepageUrl(entity.getHomepageUrl())
+                .description(entity.getDescription())
+                .address(entity.getMember().getAddress())  // 주소 매핑
+                .phone(entity.getMember().getPhone())      // 전화번호 매핑
                 .build();
     }
 }

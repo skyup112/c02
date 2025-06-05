@@ -9,11 +9,6 @@
 <div class="container mt-4">
   <h2>📋 Company Info List</h2>
 
-  <!-- 글쓰기 버튼 영역 -->
-  <div class="text-end mb-3">
-    <a th:href="@{/company/register(memberNo=1)}" class="btn btn-success">➕ 기업 소개 등록</a>
-  </div>
-
   <table class="table table-striped mt-3">
     <thead>
     <tr>
@@ -40,13 +35,12 @@
       </td>
       <td>
         <a th:href="@{/company/read(memberNo=${company.memberNo}, page=${responseDTO.page}, size=${responseDTO.size})}" class="btn btn-sm btn-primary">상세보기</a>
-        <a th:href="@{/company/modify(memberNo=${company.memberNo}, page=${responseDTO.page}, size=${responseDTO.size})}" class="btn btn-sm btn-secondary">수정</a>
       </td>
     </tr>
     </tbody>
   </table>
 
-  <nav th:if="${responseDTO.total > 0}">
+  <nav th:if="${responseDTO.total > 1}">
     <ul class="pagination justify-content-center">
       <li class="page-item" th:if="${responseDTO.prev}">
         <a class="page-link" th:href="@{/company/list(page=${responseDTO.start - 1}, size=${responseDTO.size})}">Previous</a>

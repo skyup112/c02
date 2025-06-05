@@ -1,10 +1,8 @@
 package com.example.b03.controller;
 
+import com.example.b03.domain.MembershipType;
 import com.example.b03.dto.*;
-import com.example.b03.service.ApplicationService;
-import com.example.b03.service.CompanyInfoService;
-import com.example.b03.service.MemberService;
-import com.example.b03.service.PostService;
+import com.example.b03.service.*;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -27,6 +25,7 @@ public class LoginAndMypageController {
     private final ApplicationService applicationService;
     private final PostService postService;
     private final CompanyInfoService companyInfoService;
+    private final MembershipTypeService membershipTypeservice;
 
     // 로그인 페이지
     @GetMapping("/login")
@@ -68,6 +67,7 @@ public class LoginAndMypageController {
                                @RequestParam String password,
                                HttpSession session,
                                RedirectAttributes redirectAttributes) {
+
         if (loginId.isBlank() || password.isBlank()) {
             redirectAttributes.addFlashAttribute("error", "아이디와 비밀번호를 모두 입력해주세요.");
             return "redirect:/member/login";
@@ -75,12 +75,16 @@ public class LoginAndMypageController {
 
         try {
             MemberDTO member = memberService.getMemberByLoginId(loginId);
+
             if (!password.equals(member.getPassword()) || Boolean.TRUE.equals(member.getIsDeleted())) {
                 redirectAttributes.addFlashAttribute("error", "아이디 또는 비밀번호가 일치하지 않거나 탈퇴한 계정입니다.");
                 return "redirect:/member/login";
             }
+
+            // ✅ 로그인 성공 시 세션에 저장
             session.setAttribute("loginMember", member);
             return "redirect:/member/main";
+
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "아이디 또는 비밀번호가 일치하지 않습니다.");
             return "redirect:/member/login";
@@ -172,14 +176,14 @@ public class LoginAndMypageController {
     }
 
     // 관리자: 회원 탈퇴
-    @PostMapping("/admin/member/delete/{memberNo}")
+    @PostMapping("/admin/member/remove/{memberNo}")
     public String deactivateMember(@PathVariable Integer memberNo) {
         memberService.deactivateMember(memberNo);
         return "redirect:/member/mypage";
     }
 
     // 관리자: 공고 삭제
-    @PostMapping("/admin/post/delete/{postId}")
+    @PostMapping("/admin/post/remove/{postId}")
     public String deletePost(@PathVariable Integer postId) {
         postService.deletePost(postId);
         return "redirect:/member/mypage";
@@ -227,15 +231,28 @@ public class LoginAndMypageController {
     }
 
     // 회원정보 수정
-    @GetMapping("/edit")
+    @GetMapping("/modify")
     public String showEditForm(HttpSession session, Model model) {
         MemberDTO loginMember = (MemberDTO) session.getAttribute("loginMember");
-        if (loginMember == null) return "redirect:/member/login";
+        if (loginMember == null) {
+            return "redirect:/member/login";
+        }
+
         model.addAttribute("member", loginMember);
-        return "mypage/edit-user";
+
+        int membershipTypeId = loginMember.getMembershipTypeId(); // 멤버십 타입 ID 가져오기
+
+        if (membershipTypeId == 2) {       // 기업회원이면
+            return "mypage/edit-company";
+        } else if (membershipTypeId == 3) { // 개인회원이면
+            return "mypage/edit-user";
+        } else {
+            // 혹시 모를 기본 경로 (관리자 등)
+            return "mypage/edit-user";
+        }
     }
 
-    @PostMapping("/edit")
+    @PostMapping("/modify")
     public String updateMemberInfo(@ModelAttribute MemberDTO dto,
                                    @RequestParam String confirmPassword,
                                    HttpSession session,
@@ -243,7 +260,7 @@ public class LoginAndMypageController {
         MemberDTO loginMember = (MemberDTO) session.getAttribute("loginMember");
         if (loginMember == null || !loginMember.getPassword().equals(confirmPassword)) {
             redirectAttributes.addFlashAttribute("error", "비밀번호가 일치하지 않습니다.");
-            return "redirect:/member/edit";
+            return "redirect:/member/mypage";
         }
 
         dto.setMemberNo(loginMember.getMemberNo());
@@ -258,7 +275,7 @@ public class LoginAndMypageController {
     }
 
     // 회원 탈퇴
-    @PostMapping("/delete")
+    @PostMapping("/remove")
     public String deleteMember(@RequestParam String confirmPassword,
                                HttpSession session,
                                RedirectAttributes redirectAttributes) {

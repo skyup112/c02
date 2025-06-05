@@ -49,11 +49,11 @@
             <td>
                 <a th:href="@{'/post/view/' + ${post.postId}}" th:text="${post.title}">제목</a>
             </td>
-            <td th:text="${post.address}">주소</td>
+            <td th:text="${post.location}">주소</td>
             <td th:text="${#temporals.format(post.deadline, 'yyyy-MM-dd')}">마감일</td>
-            <td><a th:href="@{'/post/edit/' + ${post.postId}}">수정</a></td>
+            <td><a th:href="@{'/post/modify/' + ${post.postId}}">수정</a></td>
             <td>
-                <form th:action="@{'/post/delete/' + ${post.postId}}" method="post"
+                <form th:action="@{'/post/remove/' + ${post.postId}}" method="post"
                       onsubmit="return confirm('정말 삭제하시겠습니까?');">
                     <button type="submit">삭제</button>
                 </form>

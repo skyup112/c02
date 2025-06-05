@@ -177,6 +177,7 @@ public class MemberServiceImpl implements MemberService {
                 })
                 .orElseThrow(() -> new IllegalArgumentException("Member not found"));
     }
+
     @Override
     public boolean isValidPassword(String password) {
         if (password == null || password.length() < 8) return false;

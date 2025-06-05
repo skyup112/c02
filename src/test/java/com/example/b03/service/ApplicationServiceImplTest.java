@@ -60,7 +60,7 @@ class ApplicationServiceImplTest {
         Post post = Post.builder()
                 .title("백엔드 개발자 모집")
                 .description("Spring Boot 경험자 우대")
-                .address("서울")
+                .location("서울")
                 .salary("면접 후 결정")
                 .deadline(LocalDate.now().plusDays(30))
                 .postedDate(LocalDateTime.now())

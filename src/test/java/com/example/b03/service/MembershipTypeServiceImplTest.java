@@ -33,15 +33,15 @@ public class MembershipTypeServiceImplTest {
         // 테스트용 데이터 3개 삽입 (관리자, 개인회원, 기업회원)
         if (membershipTypeRepository.findAll().isEmpty()) {
             membershipTypeRepository.save(new MembershipType((byte) 1, "관리자"));
-            membershipTypeRepository.save(new MembershipType((byte) 3, "개인회원"));
             membershipTypeRepository.save(new MembershipType((byte) 2, "기업회원"));
+            membershipTypeRepository.save(new MembershipType((byte) 3, "개인회원"));
         }
     }
 
     @Test
     void testGetAll() {
         List<MembershipTypeDTO> list = membershipTypeService.getAll();
-        assertEquals(2, list.size());
+        assertEquals(3, list.size());
         System.out.println("✅ 전체 멤버십 타입 조회 성공: " + list);
     }
 

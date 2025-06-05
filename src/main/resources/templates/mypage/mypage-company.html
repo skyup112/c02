@@ -51,7 +51,7 @@
         </div>
 
         <div id="companyinfo" style="display: none;">
-            <h3>📌 기업 정보</h3>
+            <h3>📌 기업 소개</h3>
 
             <p>기업명: <span th:text="${companyInfo.companyName}">-</span></p>
             <p>설립일자: <span th:text="${companyInfo.foundedDate}">-</span></p>
@@ -61,21 +61,19 @@
             <p>홈페이지:
                 <a th:href="${companyInfo.homepageUrl}" th:text="${companyInfo.homepageUrl}" target="_blank">홈페이지 방문</a>
             </p>
-            <p>전화번호: <span th:text="${companyInfo.phone}">-</span></p>
+            <p>전화번호: <span th:text="${member.phone}">-</span></p>
             <p>주소: <span th:text="${companyInfo.address}">-</span></p>
             <p>기업 소개: <span th:text="${companyInfo.description}">-</span></p>
 
-            <!-- 🔽 수정 버튼 (companyInfo가 있을 때만 보이게) -->
             <div th:if="${companyInfo.companyName != null}">
                 <button th:attr="onclick=|location.href='/company/modify?memberNo=${member.memberNo}'|">
-                    기업 정보 수정
+                    기업 소개 수정
                 </button>
             </div>
 
-            <!-- 🔽 기업 정보가 없을 때 "등록" 버튼 노출 -->
             <div th:unless="${companyInfo.companyName != null}">
                 <button th:attr="onclick=|location.href='/company/register?memberNo=${member.memberNo}'|">
-                    기업 정보 등록
+                    기업 소개 등록
                 </button>
             </div>
 
@@ -102,14 +100,14 @@
                     <tr th:each="post : ${posts}">
                         <td th:text="${post.title}"></td>
                         <td th:text="${post.salary}"></td>
-                        <td th:text="${post.address}"></td>
+                        <td th:text="${post.location}"></td>
                         <td th:text="${#temporals.format(post.deadline, 'yyyy-MM-dd')}"></td>
                         <td th:text="${#temporals.format(post.postedDate, 'yyyy-MM-dd')}"></td>
                         <td>
-                            <a th:href="@{'/post/view/' + ${post.postId}}">보기</a> |
-                            <a th:href="@{'/post/edit/' + ${post.postId}}">수정</a> |
-                            <form th:action="@{'/post/delete/' + ${post.postId}}" method="post" style="display:inline;">
-                                <button type="submit" onclick="return confirm('정말 삭제하시겠습니까?')">삭제</button>
+                            <a th:href="@{'/post/read/' + ${post.postId}}">보기</a> |
+                            <a th:href="@{'/post/modify/' + ${post.postId}}">수정</a> |
+                            <form th:action="@{'/post/remove/' + ${post.postId}}" method="post" style="display:inline;">
+                                <button type="submit" class="btn btn-danger btn-sm">삭제</button>
                             </form>
                         </td>
                     </tr>
@@ -117,7 +115,7 @@
                 </table>
             </div>
             <br/>
-            <button onclick="location.href='/post/create'">📢 새 공고 등록</button>
+            <button onclick="location.href='/post/register'">📢 새 공고 등록</button>
         </div>
 
         <div id="applicants" style="display: none;">
@@ -164,7 +162,7 @@
 
         <div id="edit" style="display: none;">
             <h3>🛠️ 회원 정보 수정</h3>
-            <button onclick="location.href='/member/edit'">회원 정보 수정</button>
+            <button onclick="location.href='/member/modify'">회원 정보 수정</button>
             <button onclick="location.href='/member/password-change'">비밀번호 변경</button>
         </div>
     </div>

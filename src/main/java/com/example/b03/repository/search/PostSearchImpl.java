@@ -63,7 +63,7 @@ public class PostSearchImpl extends QuerydslRepositorySupport implements PostSea
                 .postId(post.getPostId())
                 .memberNo(post.getCompany().getMember().getMemberNo())
                 .companyName(post.getCompany().getCompanyName())
-                .address(post.getAddress())
+                .location(post.getLocation())
                 .companyPhone(post.getCompany().getMember().getPhone())
                 .title(post.getTitle())
                 .description(post.getDescription())

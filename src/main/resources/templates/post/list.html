@@ -68,7 +68,7 @@
 
 <!-- ✅ 직무 카테고리 필터 폼 -->
 <div class="filter-form">
-    <form method="get" th:action="@{/post/all}">
+    <form method="get" th:action="@{/post/list}">
         <label for="categoryId">직무 카테고리:
             <select name="categoryId" id="categoryId">
                 <option value="" th:selected="${selectedCategoryId == null}">전체</option>
@@ -92,8 +92,8 @@
     <table>
         <thead>
         <tr>
-            <th>공고 ID</th>
             <th>제목</th>
+            <th>회사명</th>
             <th>급여</th>
             <th>주소</th>
             <th>마감일</th>
@@ -102,13 +102,13 @@
         </thead>
         <tbody>
         <tr th:each="post : ${result.dtoList}">
-            <td th:text="${post.postId}">1</td>
             <td th:text="${post.title}">제목</td>
+            <td th:text="${post.companyName}">회사명</td>
             <td th:text="${post.salary}">급여</td>
-            <td th:text="${post.address}">주소</td>
+            <td th:text="${post.location}">주소</td>
             <td th:text="${#temporals.format(post.deadline, 'yyyy-MM-dd')}">마감일</td>
             <td>
-                <a th:href="@{'/post/view/' + ${post.postId}}" th:text="${post.title}">상세</a>
+                <a th:href="@{'/post/read/' + ${post.postId}}">상세</a>
             </td>
         </tr>
         </tbody>
@@ -120,20 +120,20 @@
     <ul class="pagination justify-content-center">
         <li class="page-item" th:classappend="${result.prev} ? '' : 'disabled'">
             <a class="page-link"
-               th:href="@{|/post/all?page=${result.start - 1}&categoryId=${selectedCategoryId}|}">«</a>
+               th:href="@{|/post/list?page=${result.start - 1}&categoryId=${selectedCategoryId}|}">«</a>
         </li>
 
         <li class="page-item"
             th:each="i : ${#numbers.sequence(result.start, result.end)}"
             th:classappend="${i == result.page} ? 'active'">
             <a class="page-link"
-               th:href="@{|/post/all?page=${i}&categoryId=${selectedCategoryId}|}"
+               th:href="@{|/post/list?page=${i}&categoryId=${selectedCategoryId}|}"
                th:text="${i}">1</a>
         </li>
 
         <li class="page-item" th:classappend="${result.next} ? '' : 'disabled'">
             <a class="page-link"
-               th:href="@{|/post/all?page=${result.end + 1}&categoryId=${selectedCategoryId}|}">»</a>
+               th:href="@{|/post/list?page=${result.end + 1}&categoryId=${selectedCategoryId}|}">»</a>
         </li>
     </ul>
 </nav>
@@ -153,7 +153,7 @@
     function goToPost() {
         const isLoggedIn = /*[[${session.loginMember != null}]]*/ false;
         if (isLoggedIn) {
-            window.location.href = '/post/all';
+            window.location.href = '/post/list';
         } else {
             alert('로그인이 필요합니다. 로그인 페이지로 이동합니다.');
             window.location.href = '/member/login';

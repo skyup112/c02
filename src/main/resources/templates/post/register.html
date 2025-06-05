@@ -9,11 +9,7 @@
 <div class="container mt-4">
     <h2>📝 공고 등록</h2>
 
-    <div th:if="${error}" class="alert alert-danger" role="alert" style="margin-bottom: 20px;">
-        <p th:text="${error}">직무 카테고리는 최소 1개 이상 선택해야 합니다.</p>
-    </div>
-
-    <form th:action="@{/post/register}" method="post">
+    <form th:action="@{/post/register}" method="post" onsubmit="return validateForm()">
         <input type="hidden" name="memberNo" th:value="${memberNo}"/>
 
         <div class="mb-3">
@@ -27,18 +23,23 @@
         </div>
 
         <div class="mb-3">
+            <label class="form-label">공고 설명</label>
+            <textarea name="description" class="form-control" rows="5" placeholder="공고 상세 내용을 입력해주세요." required></textarea>
+        </div>
+
+        <div class="mb-3">
             <label class="form-label">급여</label>
-            <input type="text" name="salary" class="form-control">
+            <input type="text" name="salary" class="form-control" required>
         </div>
 
         <div class="mb-3">
             <label class="form-label">마감일</label>
-            <input type="date" name="deadline" class="form-control">
+            <input type="date" name="deadline" class="form-control" required>
         </div>
 
         <div class="mb-3">
             <label class="form-label">근무지</label>
-            <input type="text" name="location" class="form-control">
+            <input type="text" name="location" class="form-control" required>
         </div>
 
         <div class="mb-3">
@@ -58,9 +59,33 @@
 
         <div class="text-end">
             <button type="submit" class="btn btn-primary">등록</button>
-            <a th:href="@{/member/mypage}" class="btn btn-secondary">취소</a>
+            <a th:href="@{/post/list}" class="btn btn-secondary">취소</a>
         </div>
     </form>
 </div>
+
+<!-- 유효성 검사 스크립트 -->
+<script>
+    function validateForm() {
+        const title = document.querySelector('input[name="title"]').value.trim();
+        const desc = document.querySelector('textarea[name="description"]').value.trim();
+        const salary = document.querySelector('input[name="salary"]').value.trim();
+        const deadline = document.querySelector('input[name="deadline"]').value;
+        const location = document.querySelector('input[name="location"]').value.trim();
+        const checkedCategories = document.querySelectorAll('input[name="jobCategoryIds"]:checked');
+
+        if (!title || !desc || !salary || !deadline || !location) {
+            alert("필수 항목을 모두 입력해주세요.");
+            return false;
+        }
+
+        if (checkedCategories.length === 0) {
+            alert("최소 하나 이상의 직무 카테고리를 선택해주세요.");
+            return false;
+        }
+
+        return true; // 모든 조건 만족 시 제출 허용
+    }
+</script>
 </body>
 </html>
