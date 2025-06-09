@@ -18,6 +18,6 @@ public interface PostRepository extends JpaRepository<Post, Integer>, PostSearch
             "WHERE pc.jobCategory.jobCategoryId = :categoryId")
     List<Post> findByJobCategoryId(@Param("categoryId") Integer categoryId);
 
-    List<Post> findByCompanyInfo_Member_IsDeletedFalse();
+    List<Post> findByCompany_Member_IsDeletedFalse();
 }
 

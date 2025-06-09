@@ -8,7 +8,7 @@ import com.example.b03.dto.InquiryCommentResponseDTO;
 import com.example.b03.repository.InquiryCommentRepository;
 import com.example.b03.repository.InquiryRepository;
 import com.example.b03.repository.MemberRepository;
-import com.example.b03.repository.MembershipTypeRepository; // MembershipTypeRepository 임포트 여부 확인
+import com.example.b03.repository.MembershipTypeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
@@ -30,8 +30,7 @@ public class InquiryCommentServiceImpl implements InquiryCommentService {
     private final MembershipTypeRepository membershipTypeRepository;
     private final ModelMapper modelMapper;
 
-    // 관리자 멤버십 타입 ID (상수로 정의하거나 DB에서 조회)
-    private static final Byte ADMIN_MEMBERSHIP_TYPE_ID = 1; // ⭐ 관리자 멤버십 타입 ID를 1로 가정
+    private static final Byte ADMIN_MEMBERSHIP_TYPE_ID = 1;
 
     @Override
     public InquiryCommentResponseDTO createComment(InquiryCommentRequestDTO requestDTO) {
@@ -45,7 +44,6 @@ public class InquiryCommentServiceImpl implements InquiryCommentService {
         Member admin = memberRepository.findById(requestDTO.getAdminNo())
                 .orElseThrow(() -> new IllegalArgumentException("해당 관리자를 찾을 수 없습니다: " + requestDTO.getAdminNo()));
 
-        // ⭐⭐⭐ 최종 수정: getTypeId()로 변경! ⭐⭐⭐
         if (admin.getMembershipType() == null || !admin.getMembershipType().getTypeId().equals(ADMIN_MEMBERSHIP_TYPE_ID)) {
             throw new IllegalArgumentException("관리자만 답변을 작성할 수 있습니다.");
         }
@@ -74,8 +72,10 @@ public class InquiryCommentServiceImpl implements InquiryCommentService {
             throw new IllegalArgumentException("답변 작성 관리자만 수정할 수 있습니다.");
         }
 
-        comment.setContent(requestDTO.getContent());
-        // inquiryCommentRepository.save(comment);
+        // ⭐️⭐️⭐️ 엔티티 수정 없이, Lombok @Data가 생성하는 setter 사용 ⭐️⭐️⭐️
+        comment.setContent(requestDTO.getContent()); // 기존 changeContent() 대신 setContent() 사용
+
+        inquiryCommentRepository.save(comment); // 변경된 엔티티를 저장해야 DB에 반영됨
 
         log.info("답변 수정 완료: " + comment.getCommentId());
         return entityToDto(comment);
@@ -94,8 +94,10 @@ public class InquiryCommentServiceImpl implements InquiryCommentService {
             throw new IllegalArgumentException("답변 작성 관리자만 삭제할 수 있습니다.");
         }
 
-        comment.setIsDeleted(true);
-        inquiryCommentRepository.save(comment);
+        // ⭐️⭐️⭐️ 엔티티 수정 없이, Lombok @Data가 생성하는 setter 사용 ⭐️⭐️⭐️
+        comment.setIsDeleted(true); // 또는 comment.setDeleted(true); (Lombok 생성 규칙에 따라)
+
+        inquiryCommentRepository.save(comment); // 변경된 엔티티를 저장해야 DB에 반영됨
 
         log.info("답변 삭제 완료 (논리적 삭제): " + commentId);
     }
@@ -111,6 +113,15 @@ public class InquiryCommentServiceImpl implements InquiryCommentService {
         return comments.stream()
                 .map(this::entityToDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getCommentCountByInquiryId(Integer inquiryId) {
+        Inquiry inquiry = inquiryRepository.findById(inquiryId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 문의를 찾을 수 없습니다: " + inquiryId));
+
+        return inquiryCommentRepository.countByInquiryAndIsDeletedFalse(inquiry);
     }
 
     private InquiryCommentResponseDTO entityToDto(InquiryComment inquiryComment) {

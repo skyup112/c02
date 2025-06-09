@@ -1,12 +1,13 @@
 package com.example.b03.service;
 
 import com.example.b03.domain.Inquiry;
-import com.example.b03.domain.Member; // Member 엔티티 임포트 추가
-import com.example.b03.repository.MemberRepository; // MemberRepository 임포트 추가
+import com.example.b03.domain.Member;
 import com.example.b03.dto.InquiryListDTO;
 import com.example.b03.dto.InquiryPageRequestDTO;
 import com.example.b03.dto.InquiryPageResponseDTO;
+import com.example.b03.repository.InquiryCommentRepository;
 import com.example.b03.repository.InquiryRepository;
+import com.example.b03.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
@@ -26,17 +27,17 @@ import java.util.stream.Collectors;
 public class InquiryServiceImpl implements InquiryService {
 
     private final InquiryRepository inquiryRepository;
-    private final MemberRepository memberRepository; // ⭐ 추가: MemberRepository 주입
+    private final MemberRepository memberRepository;
+    private final InquiryCommentRepository inquiryCommentRepository; // ⭐️ 추가: InquiryCommentRepository 주입!
     private final ModelMapper modelMapper;
 
     @Override
     public Integer register(InquiryListDTO inquiryListDTO) {
-        // ⭐ 수정: memberNo로 Member 엔티티 조회 후 Inquiry에 설정
         Member member = memberRepository.findById(inquiryListDTO.getMemberNo())
                 .orElseThrow(() -> new IllegalArgumentException("해당 회원을 찾을 수 없습니다: " + inquiryListDTO.getMemberNo()));
 
         Inquiry inquiry = modelMapper.map(inquiryListDTO, Inquiry.class);
-        inquiry.setMember(member); // ⭐ 추가: 조회한 Member 엔티티를 Inquiry에 설정
+        inquiry.setMember(member);
 
         Inquiry savedInquiry = inquiryRepository.save(inquiry);
         log.info("새로운 문의 등록: " + savedInquiry.getInquiryId());
@@ -60,7 +61,6 @@ public class InquiryServiceImpl implements InquiryService {
         Optional<Inquiry> result = inquiryRepository.findById(inquiryListDTO.getInquiryId());
         Inquiry inquiry = result.orElseThrow(() -> new IllegalArgumentException("해당 문의를 찾을 수 없습니다: " + inquiryListDTO.getInquiryId()));
 
-        // ⭐ 추가: 작성자 검증 로직
         if (!inquiry.getMember().getMemberNo().equals(inquiryListDTO.getMemberNo())) {
             throw new IllegalArgumentException("문의 작성자만 수정할 수 있습니다.");
         }
@@ -72,7 +72,6 @@ public class InquiryServiceImpl implements InquiryService {
         inquiry.setTitle(inquiryListDTO.getTitle());
         inquiry.setContent(inquiryListDTO.getContent());
 
-        // inquiryRepository.save(inquiry); // 더티 체킹에 의해 자동 저장되므로 이 줄은 생략 가능
         log.info("문의 수정 완료: " + inquiry.getInquiryId());
     }
 
@@ -85,10 +84,7 @@ public class InquiryServiceImpl implements InquiryService {
             throw new IllegalArgumentException("이미 삭제된 문의글입니다.");
         }
 
-        // ⭐ 논리적 삭제: isDeleted 필드를 true로 설정
         inquiry.setIsDeleted(true);
-
-        // 변경된 엔티티를 저장하여 DB에 반영 (더티 체킹에 의해 자동 반영되므로 생략 가능하나 명시적으로 호출해도 무방)
         inquiryRepository.save(inquiry);
 
         log.info("문의 삭제 완료 (논리적 삭제): " + inquiryId);
@@ -96,25 +92,33 @@ public class InquiryServiceImpl implements InquiryService {
 
     @Override
     public InquiryPageResponseDTO<InquiryListDTO> list(InquiryPageRequestDTO inquiryPageRequestDTO) {
-        Pageable pageable = inquiryPageRequestDTO.getPageable();
+        Pageable pageable = inquiryPageRequestDTO.getPageable(); // Pageable 생성 시 정렬 기준이 없으면 기본 정렬 (ID 내림차순 등) 필요
 
         Page<Inquiry> result;
 
+        // searchAll 메서드의 파라미터가 String[] searchTypes, String searchKeyword, Pageable pageable 이 맞다면 아래 코드
         if (inquiryPageRequestDTO.getSearchType() != null && inquiryPageRequestDTO.getSearchKeyword() != null
                 && !inquiryPageRequestDTO.getSearchType().trim().isEmpty() && !inquiryPageRequestDTO.getSearchKeyword().trim().isEmpty()) {
             result = inquiryRepository.searchAll(
-                    new String[]{inquiryPageRequestDTO.getSearchType()},
+                    new String[]{inquiryPageRequestDTO.getSearchType()}, // ⭐ 배열 형태로 전달
                     inquiryPageRequestDTO.getSearchKeyword(),
                     pageable
             );
             log.info("검색 결과: " + result.getTotalElements() + "개");
         } else {
+            // 검색 조건이 없을 경우, 삭제되지 않은 문의글을 최신순으로 가져옴 (inquiryId 내림차순으로 가정)
             result = inquiryRepository.findByIsDeletedFalseOrderByInquiryIdDesc(pageable);
             log.info("전체 목록 (검색 조건 없음): " + result.getTotalElements() + "개");
         }
 
         List<InquiryListDTO> dtoList = result.getContent().stream()
-                .map(inquiry -> modelMapper.map(inquiry, InquiryListDTO.class))
+                .map(inquiry -> {
+                    InquiryListDTO dto = modelMapper.map(inquiry, InquiryListDTO.class);
+                    // ⭐️⭐️⭐️ 각 문의글에 대한 댓글 개수 추가! ⭐️⭐️⭐️
+                    int commentCount = inquiryCommentRepository.countByInquiryAndIsDeletedFalse(inquiry);
+                    dto.setCommentCount(commentCount); // InquiryListDTO에 setCommentCount() 메서드가 있어야 함
+                    return dto;
+                })
                 .collect(Collectors.toList());
 
         return InquiryPageResponseDTO.<InquiryListDTO>withAll()

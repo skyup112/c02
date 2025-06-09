@@ -150,7 +150,7 @@ public class PostServiceImpl implements PostService {
     }
 
     public List<PostDTO> getAllActivePosts() {
-        List<Post> posts = postRepository.findByCompanyInfo_Member_IsDeletedFalse();
+        List<Post> posts = postRepository.findByCompany_Member_IsDeletedFalse();
         return posts.stream().map(this::toDTO).collect(Collectors.toList());
     }
 

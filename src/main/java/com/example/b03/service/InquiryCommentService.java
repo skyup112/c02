@@ -2,8 +2,6 @@ package com.example.b03.service;
 
 import com.example.b03.dto.InquiryCommentRequestDTO;
 import com.example.b03.dto.InquiryCommentResponseDTO;
-// import com.example.b03.dto.InquiryCommentPageRequestDTO; // ⭐ 제거: 존재하지 않는 DTO
-// import com.example.b03.dto.InquiryCommentPageResponseDTO; // ⭐ 제거: 존재하지 않는 DTO
 
 import java.util.List;
 
@@ -37,4 +35,7 @@ public interface InquiryCommentService {
      * @return 해당 문의글에 대한 답변 응답 DTO 목록
      */
     List<InquiryCommentResponseDTO> getCommentsForInquiry(Integer inquiryId); // ⭐ 수정: 반환 타입, 파라미터 변경
+
+    //댓글 개수 세는 메소드 추가!
+    int getCommentCountByInquiryId(Integer inquiryId);
 }
