@@ -9,6 +9,7 @@ import com.example.b03.dto.MemberDTO;
 import com.example.b03.repository.BoardPostRepository;
 import com.example.b03.repository.MemberRepository;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;

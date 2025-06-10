@@ -28,6 +28,7 @@ public class BoardPostController {
     public String list(BoardPageRequestDTO pageRequestDTO, Model model) {
         BoardPageResponseDTO<BoardPostDTO> responseDTO = boardService.getList(pageRequestDTO);
         model.addAttribute("responseDTO", responseDTO);
+
         return "board/list";
     }
 
