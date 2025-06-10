@@ -9,7 +9,42 @@
 <div class="container mt-4">
   <h2>📋 Company Info List</h2>
 
-  <table class="table table-striped mt-3">
+  <!-- 🔍 Search and Filter Form -->
+  <form method="get" th:action="@{/company/list}" class="row g-3 align-items-end mb-4">
+    <div class="col-auto">
+      <label for="type" class="form-label">검색 유형</label>
+      <select name="type" class="form-select" id="type">
+        <option value="">-- 선택 --</option>
+        <option value="n" th:selected="${pageRequestDTO.type == 'n'}">회사명</option>
+        <option value="t" th:selected="${pageRequestDTO.type == 't'}">기술스택</option>
+        <option value="d" th:selected="${pageRequestDTO.type == 'd'}">설명</option>
+        <option value="nt" th:selected="${pageRequestDTO.type == 'nt'}">회사명+기술</option>
+      </select>
+    </div>
+
+    <div class="col-auto">
+      <label for="keyword" class="form-label">검색어</label>
+      <input type="text" name="keyword" class="form-control" id="keyword" th:value="${pageRequestDTO.keyword}">
+    </div>
+
+    <div class="col-auto">
+      <label for="categoryId" class="form-label">직무 카테고리</label>
+      <select name="categoryId" class="form-select" id="categoryId">
+        <option value="">-- 전체 --</option>
+        <option th:each="cat : ${jobCategories}"
+                th:value="${cat.jobCategoryId}"
+                th:text="${cat.name}"
+                th:selected="${pageRequestDTO.categoryId == cat.jobCategoryId}"></option>
+      </select>
+    </div>
+
+    <div class="col-auto">
+      <button type="submit" class="btn btn-primary">검색</button>
+    </div>
+  </form>
+
+  <!-- 📋 Company Table -->
+  <table class="table table-striped">
     <thead>
     <tr>
       <th>#</th>
@@ -34,22 +69,29 @@
         <a th:href="@{${company.homepageUrl}}" th:text="${company.homepageUrl}" target="_blank">홈페이지</a>
       </td>
       <td>
-        <a th:href="@{/company/read(memberNo=${company.memberNo}, page=${responseDTO.page}, size=${responseDTO.size})}" class="btn btn-sm btn-primary">상세보기</a>
+        <a th:href="@{/company/read(memberNo=${company.memberNo}, page=${responseDTO.page}, size=${responseDTO.size}, type=${pageRequestDTO.type}, keyword=${pageRequestDTO.keyword}, categoryId=${pageRequestDTO.categoryId})}" class="btn btn-sm btn-primary">상세보기</a>
       </td>
     </tr>
     </tbody>
   </table>
 
+  <!-- 🔄 Pagination -->
   <nav th:if="${responseDTO.total > 1}">
     <ul class="pagination justify-content-center">
       <li class="page-item" th:if="${responseDTO.prev}">
-        <a class="page-link" th:href="@{/company/list(page=${responseDTO.start - 1}, size=${responseDTO.size})}">Previous</a>
+        <a class="page-link"
+           th:href="@{/company/list(page=${responseDTO.start - 1}, size=${responseDTO.size}, type=${pageRequestDTO.type}, keyword=${pageRequestDTO.keyword}, categoryId=${pageRequestDTO.categoryId})}">Previous</a>
       </li>
-      <li class="page-item" th:each="i : ${#numbers.sequence(responseDTO.start, responseDTO.end)}" th:classappend="${i == responseDTO.page} ? 'active'">
-        <a class="page-link" th:href="@{/company/list(page=${i}, size=${responseDTO.size})}" th:text="${i}">1</a>
+      <li class="page-item"
+          th:each="i : ${#numbers.sequence(responseDTO.start, responseDTO.end)}"
+          th:classappend="${i == responseDTO.page} ? 'active'">
+        <a class="page-link"
+           th:href="@{/company/list(page=${i}, size=${responseDTO.size}, type=${pageRequestDTO.type}, keyword=${pageRequestDTO.keyword}, categoryId=${pageRequestDTO.categoryId})}"
+           th:text="${i}">1</a>
       </li>
       <li class="page-item" th:if="${responseDTO.next}">
-        <a class="page-link" th:href="@{/company/list(page=${responseDTO.end + 1}, size=${responseDTO.size})}">Next</a>
+        <a class="page-link"
+           th:href="@{/company/list(page=${responseDTO.end + 1}, size=${responseDTO.size}, type=${pageRequestDTO.type}, keyword=${pageRequestDTO.keyword}, categoryId=${pageRequestDTO.categoryId})}">Next</a>
       </li>
     </ul>
   </nav>

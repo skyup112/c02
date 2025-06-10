@@ -11,6 +11,7 @@ public interface CompanyInfoService {
     void delete(Integer memberNo);
 
     PageResponseDTO<CompanyInfoDTO> getList(PageRequestDTO requestDTO);
+    PageResponseDTO<CompanyInfoDTO> search(PageRequestDTO pageRequestDTO);
 }
 
 

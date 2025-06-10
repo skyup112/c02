@@ -11,6 +11,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
@@ -23,105 +24,121 @@ public class CompanyInfoController {
 
     private final CompanyInfoService companyInfoService;
     private final CompanyJobCategoryService companyJobCategoryService;
-    private final JobCategoryService jobCategoryService; //  전체 직무 카테고리 조회용
+    private final JobCategoryService jobCategoryService;
 
+    // 🔍 검색 포함 목록
     @GetMapping("/list")
-    public void list(Model model, PageRequestDTO pageRequestDTO) {
-        PageResponseDTO<CompanyInfoDTO> responseDTO = companyInfoService.getList(pageRequestDTO);
-        log.info("CompanyInfo list: {}", responseDTO);
-        model.addAttribute("responseDTO", responseDTO);
-    }
-
-    @GetMapping({"/read", "/modify"})
-    public void readOrModify(@RequestParam("memberNo") Integer memberNo,
-                             @ModelAttribute("pageRequestDTO") PageRequestDTO pageRequestDTO,
-                             Model model) {
-        CompanyInfoDTO dto = companyInfoService.getByMemberNo(memberNo);
-
-        List<CompanyJobCategoryDTO> selectedJobCategories = companyJobCategoryService.getCategoriesByMemberNo(memberNo);
-        List<JobCategoryDTO> allJobCategories = jobCategoryService.getAll(); // 전체 목록
-
-        // 🔹 선택된 카테고리 ID 목록 (modify 체크박스용)
-        List<Integer> selectedJobCategoryIds = selectedJobCategories.stream()
-                .map(CompanyJobCategoryDTO::getJobCategoryId)
-                .collect(Collectors.toList());
-
-        // 🔹 선택된 카테고리 이름 목록 (read 화면 표시용)
-        List<String> selectedJobCategoryNames = selectedJobCategories.stream()
-                .map(CompanyJobCategoryDTO::getJobCategoryName)
-                .collect(Collectors.toList());
-
-        dto.setJobCategoryNames(selectedJobCategoryNames); // 🔥 DTO에 주입
-
-        model.addAttribute("dto", dto);
-        model.addAttribute("jobCategories", allJobCategories); // modify용
-        model.addAttribute("selectedJobCategoryIds", selectedJobCategoryIds); // modify용
-        model.addAttribute("pageRequestDTO", pageRequestDTO);
-    }
-
-
-    // 수정 처리
-    @PostMapping("/modify")
-    public String modifySubmit(CompanyInfoDTO dto,
-                               @RequestParam(value = "jobCategoryIds", required = false) List<Integer> jobCategoryIds,
-                               PageRequestDTO pageRequestDTO) {
-
-        log.info("Modify Submit: {}", dto);
-
-        // 회사 정보 업데이트
-        companyInfoService.update(dto);
-
-        // 체크박스 선택이 없을 경우를 대비하여 빈 리스트 처리
-        if (jobCategoryIds == null) {
-            jobCategoryIds = List.of(); // 또는 new ArrayList<>()
+    public String list(@ModelAttribute PageRequestDTO pageRequestDTO, Model model) {
+        if (pageRequestDTO == null) {
+            pageRequestDTO = PageRequestDTO.builder().page(1).size(10).build();
         }
 
-        // 직무 카테고리 수정 반영
+        PageResponseDTO<CompanyInfoDTO> responseDTO = companyInfoService.search(pageRequestDTO);
+        model.addAttribute("responseDTO", responseDTO);
+        return "company/list";
+    }
+
+    // 🔍 조회 / 수정 공용
+    @GetMapping({"/read", "/modify"})
+    public String readOrModify(@RequestParam("memberNo") Integer memberNo,
+                               @ModelAttribute PageRequestDTO pageRequestDTO,
+                               Model model) {
+        try {
+            CompanyInfoDTO dto = companyInfoService.getByMemberNo(memberNo);
+            List<CompanyJobCategoryDTO> selectedJobCategories = companyJobCategoryService.getCategoriesByMemberNo(memberNo);
+            List<JobCategoryDTO> allJobCategories = jobCategoryService.getAll();
+
+            List<Integer> selectedIds = selectedJobCategories.stream()
+                    .map(CompanyJobCategoryDTO::getJobCategoryId)
+                    .collect(Collectors.toList());
+
+            List<String> selectedNames = selectedJobCategories.stream()
+                    .map(CompanyJobCategoryDTO::getJobCategoryName)
+                    .collect(Collectors.toList());
+
+            dto.setJobCategoryNames(selectedNames);
+
+            model.addAttribute("dto", dto);
+            model.addAttribute("jobCategories", allJobCategories);
+            model.addAttribute("selectedJobCategoryIds", selectedIds);
+            model.addAttribute("pageRequestDTO", pageRequestDTO);
+
+        } catch (NoSuchElementException e) {
+            log.error("❌ 회사 정보 조회 실패: {}", e.getMessage());
+            return "redirect:/company/list";
+        }
+
+        return "company/" + (isModifyPage() ? "modify" : "read");
+    }
+
+    private boolean isModifyPage() {
+        // 실제 요청 URL에 따라 판단하도록 개선 가능
+        return true;
+    }
+
+    // ✏️ 수정 처리
+    @PostMapping("/modify")
+    public String modifySubmit(@ModelAttribute CompanyInfoDTO dto,
+                               @RequestParam(value = "jobCategoryIds", required = false) List<Integer> jobCategoryIds,
+                               @ModelAttribute PageRequestDTO pageRequestDTO) {
+
+        log.info("✏️ Modify: memberNo={}, name={}", dto.getMemberNo(), dto.getCompanyName());
+
+        companyInfoService.update(dto);
+
+        if (jobCategoryIds == null) {
+            jobCategoryIds = Collections.emptyList();
+        }
+
         companyJobCategoryService.registerCategories(dto.getMemberNo(), jobCategoryIds);
-
-
 
         return "redirect:/member/mypage";
     }
 
-
-    // 삭제 처리
+    // 🗑️ 삭제
     @PostMapping("/remove")
-    public String remove(@RequestParam("memberNo") Integer memberNo, PageRequestDTO pageRequestDTO) {
-        log.info("Remove memberNo: {}", memberNo);
-        companyInfoService.delete(memberNo);
+    public String remove(@RequestParam("memberNo") Integer memberNo,
+                         @ModelAttribute PageRequestDTO pageRequestDTO) {
+        try {
+            companyInfoService.delete(memberNo);
+            log.info("🗑️ 삭제 완료: memberNo={}", memberNo);
+        } catch (NoSuchElementException e) {
+            log.warn("⚠️ 삭제 실패: {}", e.getMessage());
+        }
+
         return "redirect:/company/list?page=" + pageRequestDTO.getPage()
-                + "&size=" + pageRequestDTO.getSize();
+                + "&size=" + pageRequestDTO.getSize()
+                + "&type=" + (pageRequestDTO.getType() == null ? "" : pageRequestDTO.getType())
+                + "&keyword=" + (pageRequestDTO.getKeyword() == null ? "" : pageRequestDTO.getKeyword());
     }
 
+    // 🆕 등록 폼
     @GetMapping("/register")
     public String registerForm(@RequestParam("memberNo") Integer memberNo, Model model) {
         List<JobCategoryDTO> jobCategories = jobCategoryService.getAll();
         model.addAttribute("jobCategories", jobCategories);
-        model.addAttribute("memberNo", memberNo); // 💡 form hidden input에서 사용됨
+        model.addAttribute("memberNo", memberNo);
         return "company/register";
     }
+
+    // ✅ 등록 처리
     @PostMapping("/register")
     public String registerSubmit(@RequestParam("memberNo") Integer memberNo,
-                                 CompanyInfoDTO dto,
+                                 @ModelAttribute CompanyInfoDTO dto,
                                  @RequestParam(value = "jobCategoryIds", required = false) List<Integer> jobCategoryIds) {
-        log.info("Company Register Submit: {}", dto);
 
-        // memberNo가 DTO에 없을 경우 set (중요!)
-        dto.setMemberNo(memberNo);
+        dto.setMemberNo(memberNo); // 혹시 모르니 명시적으로 지정
+        log.info("🆕 등록 요청: memberNo={}, 회사명={}", memberNo, dto.getCompanyName());
 
-        // 회사 정보 등록
         CompanyInfoDTO savedDTO = companyInfoService.register(dto);
 
-        // 직무 카테고리 등록
         if (jobCategoryIds != null && !jobCategoryIds.isEmpty()) {
             companyJobCategoryService.registerCategories(savedDTO.getMemberNo(), jobCategoryIds);
         }
 
         return "redirect:/member/mypage";
     }
-
-
 }
+
 
 

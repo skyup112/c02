@@ -6,50 +6,57 @@ import com.example.b03.dto.CompanyInfoDTO;
 import com.example.b03.dto.PageRequestDTO;
 import com.example.b03.dto.PageResponseDTO;
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.jpa.JPQLQuery;
+
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.support.QuerydslRepositorySupport;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
-public class CompanyInfoSearchImpl extends QuerydslRepositorySupport implements CompanyInfoSearch {
+@Repository
+@RequiredArgsConstructor
+public class CompanyInfoSearchImpl implements CompanyInfoSearch {
 
-    public CompanyInfoSearchImpl() {
-        super(CompanyInfo.class);
-    }
+    private final JPAQueryFactory queryFactory;
 
     @Override
     public PageResponseDTO<CompanyInfoDTO> search(PageRequestDTO requestDTO) {
         QCompanyInfo company = QCompanyInfo.companyInfo;
+
         Pageable pageable = requestDTO.getPageable("member.memberNo");
 
-        JPQLQuery<CompanyInfo> query = from(company);
+        BooleanBuilder builder = new BooleanBuilder();
 
         if (requestDTO.getTypes() != null && requestDTO.getKeyword() != null) {
-            String keyword = requestDTO.getKeyword();
-            BooleanBuilder builder = new BooleanBuilder();
-
             for (String type : requestDTO.getTypes()) {
                 switch (type) {
-                    case "n" -> builder.or(company.companyName.containsIgnoreCase(keyword));
-                    case "t" -> builder.or(company.techStack.containsIgnoreCase(keyword));
-                    case "d" -> builder.or(company.description.containsIgnoreCase(keyword));
+                    case "n" -> builder.or(company.companyName.containsIgnoreCase(requestDTO.getKeyword()));
+                    case "t" -> builder.or(company.techStack.containsIgnoreCase(requestDTO.getKeyword()));
+                    case "d" -> builder.or(company.description.containsIgnoreCase(requestDTO.getKeyword()));
                 }
             }
-
-            query.where(builder);
         }
 
-        query.where(company.member.memberNo.gt(0));
-        getQuerydsl().applyPagination(pageable, query);
+        builder.and(company.member.memberNo.gt(0));
 
-        List<CompanyInfo> resultList = query.fetch();
-        long totalCount = query.fetchCount();
+        List<CompanyInfo> resultList = queryFactory
+                .selectFrom(company)
+                .where(builder)
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .orderBy(company.member.memberNo.desc())
+                .fetch();
+
+        long totalCount = queryFactory
+                .select(company.count())
+                .from(company)
+                .where(builder)
+                .fetchOne();
 
         List<CompanyInfoDTO> dtoList = resultList.stream()
                 .map(CompanyInfoDTO::fromEntity)
-                .collect(Collectors.toList());
+                .toList();
 
         return PageResponseDTO.<CompanyInfoDTO>withAll()
                 .pageRequestDTO(requestDTO)

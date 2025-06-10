@@ -155,7 +155,7 @@ public class CompanyInfoServiceImpl implements CompanyInfoService {
 
     @Override
     public PageResponseDTO<CompanyInfoDTO> getList(PageRequestDTO requestDTO) {
-        Pageable pageable = requestDTO.getPageable("memberNo");
+        Pageable pageable = requestDTO.getPageable("member.memberNo");
         Page<CompanyInfo> result = companyInfoRepository.findAll(pageable);
 
         List<CompanyInfoDTO> dtoList = result.getContent()
@@ -169,6 +169,7 @@ public class CompanyInfoServiceImpl implements CompanyInfoService {
                 .total((int) result.getTotalElements())
                 .build();
     }
+
 
 //    @Override
 //    public PageResponseDTO<CompanyInfoDTO> getList(PageRequestDTO requestDTO) {
@@ -186,6 +187,11 @@ public class CompanyInfoServiceImpl implements CompanyInfoService {
 //                .total((int) result.getTotalElements())
 //                .build();
 //    }
+@Override
+public PageResponseDTO<CompanyInfoDTO> search(PageRequestDTO pageRequestDTO) {
+    return companyInfoRepository.search(pageRequestDTO);
+}
+
 
 }
 

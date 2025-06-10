@@ -1,85 +1,157 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="ko">
 <head>
-  <title th:text="${memberTypeName} + ' 회원가입'">회원가입</title>
   <meta charset="UTF-8">
+  <title>CodeFarm 회원가입</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700;400&family=Noto+Sans+KR:wght@700;400&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'GongGothicMedium';
+      src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_20-10@1.0/GongGothicMedium.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+    }
+    body {
+      font-family: 'GongGothicMedium', 'Noto Sans KR', 'Inter', sans-serif;
+      background: #f7f7f7;
+    }
+    .form-label {
+      width: 120px;
+      min-width: 120px;
+      text-align: left;
+    }
+    .form-input {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border-radius: 0.375rem;
+      border: 1px solid #d1d5db;
+      background-color: #ffffff;
+      font-size: 1.125rem;
+      line-height: 1.75rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: #10b981;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+    }
+  </style>
 </head>
-<body>
-<h2 th:text="${memberTypeName} + ' 회원가입'">회원가입</h2>
-
-<form th:action="@{/member/register}" method="post">
-  <input type="hidden" name="membershipTypeId" th:value="${membershipTypeId}"/>
-
-  <div th:if="${membershipTypeId == 3}">
-    <label>이름: <input type="text" name="name" required/></label><br/>
-    <label>생년월일: <input type="date" name="birthDate" required/></label><br/>
-    <label>아이디: <input type="text" name="loginId" required/></label>
-    <button type="button" onclick="checkDuplicate()">중복 확인</button><br/>
-    <label>비밀번호:
-      <input type="password" name="password" required
-             pattern="^(?=.*[A-Za-z])(?=.*\\d)(?=.*[!@#$%^&*()_+=-]).{8,}$"
-             title="8자 이상, 영문+숫자+특수문자를 포함해야 합니다." />
-    </label><br/>
-
-    <label>비밀번호 확인:
-      <input type="password" name="passwordConfirm" required
-             pattern="^(?=.*[A-Za-z])(?=.*\\d)(?=.*[!@#$%^&*()_+=-]).{8,}$"
-             title="비밀번호 형식을 다시 확인해주세요." />
-    </label><br/>
-    <label>전화번호: <input type="text" name="phone"/></label><br/>
-    <label>주소: <input type="text" name="address"/></label><br/>
+<body class="min-h-screen text-gray-800">
+<header class="bg-white pt-4 pb-0">
+  <div class="max-w-5xl mx-auto flex items-center gap-0 px-4">
+    <img src="CodeFarm%20%EB%A1%9C%EA%B3%A03.png" alt="CodeFarm 로고" class="w-[488px] h-[126px] shrink-0">
   </div>
+</header>
 
-  <div th:if="${membershipTypeId == 2}">
-    <label>기업명: <input type="text" name="name" required/></label><br/>
-    <label>설립일자: <input type="date" name="birthDate" required/></label><br/>
-    <label>아이디: <input type="text" name="loginId" required/></label>
-    <button type="button" onclick="checkDuplicate()">중복 확인</button><br/>
-    <label>비밀번호:
-      <input type="password" name="password" required
-             pattern="^(?=.*[A-Za-z])(?=.*\\d)(?=.*[!@#$%^&*()_+=-]).{8,}$"
-             title="8자 이상, 영문+숫자+특수문자를 포함해야 합니다." />
-    </label><br/>
+<main class="max-w-5xl mx-auto px-4 py-5">
+  <section>
+    <div class="w-full max-w-5xl mx-auto flex flex-col items-center gap-10 p-10 bg-white rounded-lg shadow-lg">
+      <div class="flex-1 flex flex-col justify-center w-2/3 mx-auto">
+        <h1 class="text-4xl font-bold text-blue-600 mb-8 text-center">회원가입</h1>
 
-    <label>비밀번호 확인:
-      <input type="password" name="passwordConfirm" required
-             pattern="^(?=.*[A-Za-z])(?=.*\\d)(?=.*[!@#$%^&*()_+=-]).{8,}$"
-             title="비밀번호 형식을 다시 확인해주세요." />
-    </label><br/>
-    <label>기업 전화번호: <input type="text" name="phone"/></label><br/>
-    <label>기업 주소: <input type="text" name="address"/></label><br/>
-  </div>
+        <!-- 회원유형 선택 -->
+        <div class="flex justify-center mb-6 gap-10 text-xl font-semibold">
+          <label class="flex items-center gap-2">
+            <input type="radio" name="userType" value="2" checked class="accent-blue-600">
+            기업회원
+          </label>
+          <label class="flex items-center gap-2">
+            <input type="radio" name="userType" value="3" class="accent-blue-600">
+            개인회원
+          </label>
+        </div>
 
-  <label><input type="checkbox" required/> (필수) 개인정보 약관에 동의</label><br/><br/>
-  <button type="submit">회원가입 완료</button>
-</form>
+        <form class="w-full flex flex-col gap-5" autocomplete="off">
+          <input type="hidden" name="membership_type" id="membership_type" value="2">
+
+          <div class="flex items-center gap-6 user-type-group" id="company-fields">
+            <label for="name" class="text-xl font-semibold text-gray-700 form-label">기업명</label>
+            <input id="name" name="name" type="text" required class="form-input" placeholder="">
+          </div>
+
+          <div class="flex items-center gap-6 user-type-group" id="company-date-field">
+            <label for="birthday" class="text-xl font-semibold text-gray-700 form-label">설립일자</label>
+            <input id="birthday" name="birthday" type="date" required class="form-input" placeholder="">
+          </div>
+
+          <div class="flex items-center gap-6 user-type-group hidden" id="personal-fields">
+            <label for="name_personal" class="text-xl font-semibold text-gray-700 form-label">이름</label>
+            <input id="name_personal" name="name_personal" type="text" class="form-input" placeholder="">
+          </div>
+
+          <div class="flex items-center gap-6 user-type-group hidden" id="personal-date-field">
+            <label for="birth_personal" class="text-xl font-semibold text-gray-700 form-label">생년월일</label>
+            <input id="birth_personal" name="birth_personal" type="date" class="form-input" placeholder="">
+          </div>
+
+          <div class="flex items-center gap-6">
+            <label for="user_id" class="text-xl font-semibold text-gray-700 form-label">아이디</label>
+            <input id="user_id" name="user_id" type="text" required class="form-input">
+            <button type="button" class="px-5 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">중복 확인</button>
+          </div>
+
+          <div class="flex items-center gap-6">
+            <label for="password" class="text-xl font-semibold text-gray-700 form-label">비밀번호</label>
+            <input id="password" name="password" type="password" required class="form-input">
+          </div>
+
+          <div class="flex items-center gap-6">
+            <label for="confirm_password" class="text-xl font-semibold text-gray-700 form-label">비밀번호 확인</label>
+            <input id="confirm_password" name="confirm_password" type="password" required class="form-input">
+          </div>
+
+          <div class="flex items-center gap-6">
+            <label for="phone" class="text-xl font-semibold text-gray-700 form-label">전화번호</label>
+            <input id="phone" name="phone" type="tel" required class="form-input">
+          </div>
+
+          <div class="flex items-center gap-6">
+            <label for="address" class="text-xl font-semibold text-gray-700 form-label">주소</label>
+            <input id="address" name="address" type="text" required class="form-input">
+          </div>
+
+          <div class="flex items-center mt-3">
+            <input type="checkbox" id="terms" name="terms" required class="w-5 h-5 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500">
+            <label for="terms" class="ml-2 text-base font-medium text-gray-700">(필수) 이용 약관에 동의합니다</label>
+          </div>
+
+          <button type="submit" class="w-52 mx-auto bg-blue-700 hover:bg-blue-800 text-white py-3 rounded-md text-xl font-semibold transition-colors duration-200">
+            회원가입 완료
+          </button>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
 
 <script>
-  function checkDuplicate() {
-    const loginId = document.querySelector('input[name="loginId"]').value;
-    fetch(`/api/members/check-id/${loginId}`)
-            .then(res => res.json())
-            .then(data => alert(data ? "이미 존재하는 ID입니다." : "사용 가능한 ID입니다."));
-  }
+  const userTypeRadios = document.querySelectorAll('input[name="userType"]');
+  const membershipTypeInput = document.getElementById('membership_type');
+  const companyFields = document.getElementById('company-fields');
+  const companyDate = document.getElementById('company-date-field');
+  const personalFields = document.getElementById('personal-fields');
+  const personalDate = document.getElementById('personal-date-field');
 
-    document.addEventListener("DOMContentLoaded", function () {
-    const form = document.querySelector("form");
-    form.addEventListener("submit", function (e) {
-    const pw = document.querySelector("input[name='password']").value;
-    const pwConfirm = document.querySelector("input[name='passwordConfirm']").value;
+  userTypeRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      const value = radio.value;
+      membershipTypeInput.value = value;
 
-    if (pw !== pwConfirm) {
-    alert("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
-    e.preventDefault();
-    return;
-  }
-
-    const pwPattern = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+=-]).{8,}$/;
-    if (!pwPattern.test(pw)) {
-    alert("비밀번호는 8자 이상, 영문+숫자+특수문자를 포함해야 합니다.");
-    e.preventDefault();
-  }
-  });
+      if (value === '2') {
+        companyFields.classList.remove('hidden');
+        companyDate.classList.remove('hidden');
+        personalFields.classList.add('hidden');
+        personalDate.classList.add('hidden');
+      } else {
+        companyFields.classList.add('hidden');
+        companyDate.classList.add('hidden');
+        personalFields.classList.remove('hidden');
+        personalDate.classList.remove('hidden');
+      }
+    });
   });
 </script>
 </body>

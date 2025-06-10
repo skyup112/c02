@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+</head>
+<body>
+
+<div th:fragment="navbarFragment" class="header">
+  <div style="float:right;">
+        <span th:if="${session.loginMember == null}">
+            <a th:href="@{/member/login}">로그인</a> |
+            <a th:href="@{/member/join}">회원가입</a>
+        </span>
+    <span th:if="${session.loginMember != null}">
+            <strong th:text="${session.loginMember.name} + '님 환영합니다!'"></strong> |
+            <a th:href="@{/member/logout}">로그아웃</a>
+        </span>
+  </div>
+
+  <h2 style="color:#5f83d6;">
+    <a th:href="@{/member/main}" style="text-decoration: none; color: #5f83d6;">CodeFarm</a>
+  </h2>
+
+  <nav>
+    <a href="#" onclick="navigateWithLoginCheck('/post/list')">채용 공고</a>
+    <a href="#" onclick="navigateWithLoginCheck('/company/list')">기업 소개</a>
+    <a href="#" onclick="navigateWithLoginCheck('/boardpost/list')">자유게시판</a>
+    <a href="#" onclick="navigateWithLoginCheck('/inquiry')">1:1문의</a> <a href="#" onclick="navigateWithLoginCheck('/member/mypage')">마이페이지</a>
+  </nav>
+</div>
+
+<hr/>
+
+<script th:fragment="navbarScripts" th:inline="javascript">
+  /*<![CDATA[*/
+  // Thymeleaf 변수를 JavaScript에서 사용하기 위한 CDATA 블록
+  // 현재 세션에 로그인된 멤버가 있는지 확인하는 변수
+  const isLoggedIn = /*[[${session.loginMember != null}]]*/ false;
+
+  function navigateWithLoginCheck(url) {
+    if (isLoggedIn) {
+      window.location.href = url;
+    } else {
+      alert('로그인이 필요한 서비스입니다. 로그인 페이지로 이동합니다.');
+      window.location.href = '/member/login';
+    }
+  }
+  /*]]>*/
+</script>
+
+</body>
+</html>

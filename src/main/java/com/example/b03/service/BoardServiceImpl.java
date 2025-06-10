@@ -9,7 +9,6 @@ import com.example.b03.dto.MemberDTO;
 import com.example.b03.repository.BoardPostRepository;
 import com.example.b03.repository.MemberRepository;
 import jakarta.transaction.Transactional;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
@@ -21,8 +20,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-//import static com.example.b03.domain.QMember.member;
+import java.util.stream.IntStream; // IntStream 임포트 추가
 
 @Service
 @Log4j2
@@ -31,22 +29,17 @@ import java.util.stream.Collectors;
 public class BoardServiceImpl implements BoardService {
 
     private final ModelMapper modelMapper;
-
     private final BoardPostRepository boardPostRepository;
-
     private final MemberRepository memberRepository;
 
     @Override
     public Integer register(BoardPostDTO boardPostDTO, MemberDTO memberDTO) {
-
         if (memberDTO == null) {
             throw new IllegalStateException("로그인된 사용자만 게시글을 등록할 수 있습니다.");
         }
-
         if (boardPostDTO.getTitle() == null || boardPostDTO.getTitle().trim().isEmpty()) {
             throw new IllegalArgumentException("제목을 입력하세요.");
         }
-
         if (boardPostDTO.getContent() == null || boardPostDTO.getContent().trim().isEmpty()) {
             throw new IllegalArgumentException("내용을 입력하세요.");
         }
@@ -62,7 +55,6 @@ public class BoardServiceImpl implements BoardService {
         if (postId == null) {
             throw new IllegalStateException("게시글 등록에 실패했습니다.");
         }
-
         return postId;
     }
 
@@ -72,10 +64,11 @@ public class BoardServiceImpl implements BoardService {
                 .orElseThrow(() -> new IllegalArgumentException("게시글이 존재하지 않습니다."));
 
         BoardPostDTO dto = modelMapper.map(boardPost, BoardPostDTO.class);
-
-        // 게시글 작성자의 로그인 ID를 writerName으로 보여주고 싶은 경우
-        dto.setWriterName(boardPost.getMember().getLoginId());
-
+        if (boardPost.getMember() != null) {
+            dto.setWriterName(boardPost.getMember().getLoginId());
+        } else {
+            dto.setWriterName("Unknown"); // 작성자 정보가 없는 경우 처리
+        }
         return dto;
     }
 
@@ -88,7 +81,6 @@ public class BoardServiceImpl implements BoardService {
         if (!boardPost.getMember().getMemberNo().equals(memberDTO.getMemberNo())) {
             throw new IllegalStateException("게시글을 수정할 권한이 없습니다. (작성자만 수정 가능)");
         }
-
         if (boardPostDTO.getTitle() == null || boardPostDTO.getTitle().trim().isEmpty()) {
             throw new IllegalArgumentException("제목을 입력하세요.");
         }
@@ -96,11 +88,8 @@ public class BoardServiceImpl implements BoardService {
             throw new IllegalArgumentException("내용을 입력하세요.");
         }
 
-        boardPost.changeTitle(boardPostDTO.getTitle()); // setter 대신 비즈니스 로직 메서드 사용 권장
-        boardPost.changeContent(boardPostDTO.getContent()); // setter 대신 비즈니스 로직 메서드 사용 권장
-
-        // BaseEntity에 updateTime이 있다면 자동으로 갱신됩니다.
-        // boardPostRepository.save(boardPost); // @Transactional이 붙어있어 변경 감지로 자동 저장됩니다.
+        boardPost.changeTitle(boardPostDTO.getTitle());
+        boardPost.changeContent(boardPostDTO.getContent());
 
         log.info("게시글 수정 완료. postId: {}", postId);
         return postId;
@@ -122,38 +111,50 @@ public class BoardServiceImpl implements BoardService {
 
     @Override
     public BoardPageResponseDTO<BoardPostDTO> getList(BoardPageRequestDTO boardPageRequestDTO) {
-        // boardPageRequestDTO에서 페이징 정보 (페이지 번호, 사이즈, 정렬)를 추출
-        // 기본 정렬은 postId 내림차순
         Pageable pageable = boardPageRequestDTO.getPageable(Sort.by("postId").descending());
 
-        // 검색 타입과 키워드 추출
         String type = boardPageRequestDTO.getType();
         String keyword = boardPageRequestDTO.getKeyword();
 
-        // BoardSearchRepository의 searchAll 메소드를 사용하여 게시글 목록과 페이징 정보를 가져옴
         Page<BoardPost> result = boardPostRepository.searchAll(type, keyword, pageable);
 
-        // Page<BoardPost>를 List<BoardPostDTO>로 변환
         List<BoardPostDTO> dtoList = result.getContent().stream()
                 .map(boardPost -> {
                     BoardPostDTO dto = modelMapper.map(boardPost, BoardPostDTO.class);
-                    // ModelMapper 설정에 member.loginId -> writerName 매핑을 추가했다면 이 줄은 제거 가능
-                    if (boardPost.getMember() != null) { // member가 null인 경우 방지
+                    if (boardPost.getMember() != null) {
                         dto.setWriterName(boardPost.getMember().getLoginId());
+                    } else {
+                        dto.setWriterName("Unknown");
                     }
                     return dto;
                 })
                 .collect(Collectors.toList());
 
-        // BoardPageResponseDTO를 빌더 패턴으로 생성하여 반환
-        return BoardPageResponseDTO.<BoardPostDTO>withAll()
-                .dtoList(dtoList)
-                .totalElements((int) result.getTotalElements())
-                .page(boardPageRequestDTO.getPage())
-                .size(boardPageRequestDTO.getSize())
-                .type(type)
-                .keyword(keyword)
-                .build();
+        // ⭐ BoardPageResponseDTO의 새로운 생성자를 사용하여 페이징 정보 자동 계산
+        return new BoardPageResponseDTO<>(result, dtoList, boardPageRequestDTO);
     }
 
+    @Override
+    public BoardPageResponseDTO<BoardPostDTO> searchAll(BoardPageRequestDTO boardPageRequestDTO) {
+        Pageable pageable = boardPageRequestDTO.getPageable(Sort.by("postId").descending());
+        String type = boardPageRequestDTO.getType();
+        String keyword = boardPageRequestDTO.getKeyword();
+
+        // BoardSearchRepositoryImpl의 searchAll 메서드 호출
+        Page<BoardPost> result = boardPostRepository.searchAll(type, keyword, pageable);
+
+        List<BoardPostDTO> dtoList = result.getContent().stream()
+                .map(boardPost -> {
+                    BoardPostDTO dto = modelMapper.map(boardPost, BoardPostDTO.class);
+                    if (boardPost.getMember() != null) {
+                        dto.setWriterName(boardPost.getMember().getLoginId());
+                    } else {
+                        dto.setWriterName("Unknown");
+                    }
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
+        return new BoardPageResponseDTO<>(result, dtoList, boardPageRequestDTO);
+    }
 }

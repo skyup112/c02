@@ -36,7 +36,7 @@ public class Member extends BaseEntity {
     @Column(nullable = false, length = 20)
     private String phone;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "membership_type", nullable = false)
     private MembershipType membershipType;
 }

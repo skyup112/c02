@@ -2,6 +2,7 @@
 package com.example.b03.repository;
 
 import com.example.b03.domain.BoardComment;
+import com.example.b03.domain.BoardPost;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

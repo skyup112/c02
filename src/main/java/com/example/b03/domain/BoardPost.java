@@ -3,6 +3,8 @@ package com.example.b03.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "board_posts")

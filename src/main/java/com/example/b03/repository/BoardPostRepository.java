@@ -5,6 +5,8 @@ import com.example.b03.repository.search.BoardSearchRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 
+import java.util.Optional;
+
 public interface BoardPostRepository extends JpaRepository<BoardPost, Integer>, BoardSearchRepository, QuerydslPredicateExecutor<BoardPost> {
 
     // JpaRepository 기본 CRUD와 페이징 기능 제공
